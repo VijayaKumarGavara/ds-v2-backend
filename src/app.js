@@ -4,12 +4,14 @@ const { ConnectDB } = require("./config/database");
 
 const farmerRoutes = require("./routes/farmerRoutes");
 const buyerRoutes = require("./routes/buyerRoutes");
+const cropRoutes = require("./routes/cropRoutes");
 const app = express();
 
 app.use(express.json());
 
 app.use("/api/farmer", farmerRoutes);
 app.use("/api/buyer", buyerRoutes);
+app.use("/api/crop", cropRoutes);
 ConnectDB()
   .then(() => {
     console.log("Database connected successfully.");
