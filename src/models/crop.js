@@ -16,7 +16,7 @@ exports.addCrop = async (data) => {
     const result = await crop.save();
     return result;
   } catch (error) {
-    return error;
+    throw error;
   }
 };
 
@@ -25,7 +25,7 @@ exports.getCrops = async () => {
     const result = await Crop.find({});
     return result;
   } catch (error) {
-    return errror;
+    throw error;
   }
 };
 
@@ -38,6 +38,6 @@ exports.updateCrop = async (crop_id, data) => {
     );
     return updatedData;
   } catch (error) {
-    return error;
+    throw error;
   }
 };

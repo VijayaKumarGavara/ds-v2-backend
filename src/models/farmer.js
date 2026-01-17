@@ -20,7 +20,7 @@ exports.registerFarmer = async (farmerInfo) => {
   try {
     await farmer.save();
   } catch (error) {
-    return error;
+    throw error;
   }
 };
 
@@ -29,7 +29,7 @@ exports.getFarmers = async () => {
     const data = await Farmer.find({});
     return data;
   } catch (error) {
-    return error;
+    throw error;
   }
 };
 
@@ -44,6 +44,6 @@ exports.updateFarmer = async (farmer_id, data) => {
     );
     return result;
   } catch (error) {
-    return error;
+    throw error;
   }
 };

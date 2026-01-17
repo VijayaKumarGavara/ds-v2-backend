@@ -19,7 +19,7 @@ exports.registerBuyer = async (buyerInfo) => {
     const buyer = new Buyer(buyerInfo);
     await buyer.save();
   } catch (error) {
-    return error;
+    throw error;
   }
 };
 
@@ -28,7 +28,7 @@ exports.findBuyerByMobile = async (buyer_mobile) => {
     const buyer = await Buyer.find({ buyer_mobile: buyer_mobile });
     return buyer;
   } catch (error) {
-    return error;
+    throw error;
   }
 };
 
@@ -39,6 +39,6 @@ exports.updateBuyer = async (buyer_id, data) => {
     });
     return result;
   } catch (error) {
-    return error;
+    throw error;
   }
 };
