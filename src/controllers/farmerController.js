@@ -6,10 +6,10 @@ exports.registerFarmer = async (req, res) => {
     res
       .status(200)
       .send({ data: result, message: "Farmer Registered Successfully." });
-  } catch (err) {
+  } catch (error) {
     res.status(400).send({
       message: "Something went wrong while registering the farmer.",
-      error: err,
+      error: error.message,
     });
   }
 };
@@ -23,7 +23,7 @@ exports.getFarmers = async (req, res) => {
   } catch (error) {
     res.status(400).send({
       message: "Something went wrong while fetching the farmers.",
-      error: err,
+      error: error.message,
     });
   }
 };
@@ -39,7 +39,7 @@ exports.updateFarmer = async (req, res) => {
   } catch (error) {
     res.status(400).send({
       message: "Something went wrong while updating the farmer.",
-      error: err,
+      error: error.message,
     });
   }
 };

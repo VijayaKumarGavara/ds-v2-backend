@@ -11,7 +11,7 @@ exports.createProcurmentRequest = async (req, res) => {
   } catch (error) {
     res.status(400).send({
       success: false,
-      error: error,
+      error: error.message,
       message: "Failed to add the procurement.",
     });
   }
@@ -41,7 +41,7 @@ exports.updateProcurementRequest = async (req, res) => {
   } catch (error) {
     res.status(400).send({
       success: false,
-      error: error,
+      error: error.message,
       message: "Failed to update the procurement.",
     });
   }
@@ -70,7 +70,7 @@ exports.deleteProcurementRequest = async (req, res) => {
   } catch (error) {
     res.status(400).send({
       success: false,
-      error: error,
+      error: error.message,
       message: "Failed to delete the procurement.",
     });
   }
@@ -90,7 +90,7 @@ exports.getProcurementRequests = async (req, res) => {
   } catch (error) {
     res.status(400).send({
       success: false,
-      error: error,
+      error: error.message,
       message: "Failed to fetch the procurement requests.",
     });
   }

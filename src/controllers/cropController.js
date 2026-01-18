@@ -11,7 +11,7 @@ exports.addCrop = async (req, res) => {
   } catch (error) {
     res.status(400).send({
       message: "Something went wrong while adding new crop.",
-      error: error,
+      error: error.message,
     });
   }
 };
@@ -27,7 +27,7 @@ exports.getCrops = async (req, res) => {
   } catch (error) {
     res.status(400).send({
       message: "Something went wrong while fetching crops.",
-      error: error,
+      error: error.message,
     });
   }
 };
@@ -45,7 +45,7 @@ exports.updateCrop = async (req, res) => {
   } catch (error) {
     res.status(400).send({
       message: "Something went wrong while updating crop.",
-      error: error,
+      error: error.message,
     });
   }
 };

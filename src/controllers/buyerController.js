@@ -16,7 +16,7 @@ exports.registerBuyer = async (req, res) => {
   } catch (error) {
     res.status(400).send({
       message: "Something went wrong while registering new buyer.",
-      error: error,
+      error: error.message,
     });
   }
 };
@@ -52,6 +52,7 @@ exports.loginBuyer = async (req, res) => {
     res.status(400).send({
       success: false,
       message: "Something went wrong while logging in.",
+      error: error.message,
     });
   }
 };
@@ -62,7 +63,7 @@ exports.updateBuyer = async (req, res) => {
   console.log(req.body);
   try {
     const result = await Buyer.updateBuyer(buyer_id, data);
-    console.log({result});
+    console.log({ result });
     res.status(201).send({
       data: result,
       success: true,
@@ -71,7 +72,7 @@ exports.updateBuyer = async (req, res) => {
   } catch (error) {
     res.status(400).send({
       message: "Something went wrong while updating the buyer.",
-      error: err,
+      error: error.message,
     });
   }
 };

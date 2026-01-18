@@ -27,10 +27,10 @@ exports.createProcurementRequest = async (data) => {
   }
 };
 
-exports.updateProcurementRequest = async (request_id, data) => {
+exports.updateProcurementRequest = async (query, data) => {
   try {
     const updatedData = await ProcurementRequest.findOneAndUpdate(
-      { request_id: request_id },
+      query,
       data,
       { returnDocument: "after" }
     );
