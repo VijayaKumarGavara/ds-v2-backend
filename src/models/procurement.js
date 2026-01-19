@@ -7,11 +7,11 @@ const procurementSchema = Schema(
     farmer_id: { type: String },
     buyer_id: { type: String },
     crop_id: { type: String },
-    quantity:{type:Number},
+    quantity: { type: Number },
     cost_per_unit: { type: Number },
     total_amount: { type: Number },
   },
-  { timestamps: { createdAt: 'finalizedAt' } }
+  { timestamps: { createdAt: "finalizedAt" } }
 );
 
 const Procurement = model("Procurement", procurementSchema);
@@ -25,3 +25,5 @@ exports.createProcurement = async (data) => {
     throw error;
   }
 };
+
+exports.Procurement = Procurement;

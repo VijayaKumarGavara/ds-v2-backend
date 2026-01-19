@@ -62,3 +62,5 @@ exports.findDue = async (farmer_id, buyer_id) => {
     throw error;
   }
 };
+
+exports.PaymentDue = PaymentDue;

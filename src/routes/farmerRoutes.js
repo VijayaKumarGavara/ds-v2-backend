@@ -4,6 +4,11 @@ const farmerController = require("../controllers/farmerController");
 const router = express.Router();
 
 router.post("/register", farmerController.registerFarmer);
-router.get("/all-farmers", farmerController.getFarmers);
-router.patch("/update", farmerController.updateFarmer);
+router.get("/profile", farmerController.getProfile);
+router.patch("/update", farmerController.updateProfile);
+router.get("/sales", farmerController.getSellingRecords);
+router.get("/sales/finalized", farmerController.getFinalizedRecords);
+router.get("/payment-dues", farmerController.getPaymentDues);
+router.get("/transactions", farmerController.getTransactions);
+
 module.exports = router;

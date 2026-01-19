@@ -24,16 +24,16 @@ exports.registerFarmer = async (farmerInfo) => {
   }
 };
 
-exports.getFarmers = async () => {
+exports.getProfile = async (farmer_id) => {
   try {
-    const data = await Farmer.find({});
+    const data = await Farmer.find({ farmer_id: farmer_id });
     return data;
   } catch (error) {
     throw error;
   }
 };
 
-exports.updateFarmer = async (farmer_id, data) => {
+exports.updateProfile = async (farmer_id, data) => {
   try {
     const result = await Farmer.findOneAndUpdate(
       { farmer_id: farmer_id },

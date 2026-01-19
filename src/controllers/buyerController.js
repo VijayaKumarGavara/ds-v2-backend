@@ -1,4 +1,7 @@
 const Buyer = require("../models/buyer");
+const { ProcurementRequest } = require("../models/procurement_request");
+const {Procurement}=require("../models/procurement");
+const {PaymentDue}=require("../models/payment_dues");
 const { comparePassword } = require("../utils/comparePassword");
 const { getHashedPassword } = require("../utils/getHashedPassword");
 
@@ -73,6 +76,175 @@ exports.updateBuyer = async (req, res) => {
     res.status(400).send({
       message: "Something went wrong while updating the buyer.",
       error: error.message,
+    });
+  }
+};
+
+exports.getProcurementRequests = async (req, res) => {
+  const { buyer_id } = req.query;
+  try {
+    const pendingRequests = await ProcurementRequest.aggregate([
+      {
+        $match: {
+          buyer_id: buyer_id,
+          status: "pending",
+        },
+      },
+
+      
+      {
+        $lookup: {
+          from: "farmers",
+          localField: "farmer_id",
+          foreignField: "farmer_id",
+          as: "farmer",
+        },
+      },
+      { $unwind: "$farmer" },
+      {
+        $lookup: {
+          from: "crops",
+          localField: "crop_id",
+          foreignField: "crop_id",
+          as: "crop",
+        },
+      },
+      { $unwind: "$crop" },
+
+      {
+        $project: {
+          _id: 0,
+
+          request_id: 1,
+          status: 1,
+          quantity: 1,
+          createdAt: 1,
+
+          farmer_name: "$farmer.farmer_name",
+          crop_name: "$crop.crop_name",
+          crop_units: "$crop.crop_units",
+        },
+      },
+    ]);
+
+    res.status(200).send({
+      success: true,
+      data: pendingRequests,
+      message: "Successfully fetched the procurement requests.",
+    });
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      errror: error.message,
+      message: "Failed to fetch the procurement requests.",
+    });
+  }
+};
+
+exports.getProcurements = async (req, res) => {
+  const { buyer_id } = req.query;
+  try {
+    const finalizedProcurements = await Procurement.aggregate([
+      {
+        $match: {
+          buyer_id: buyer_id,
+        },
+      },
+
+      
+      {
+        $lookup: {
+          from: "farmers",
+          localField: "farmer_id",
+          foreignField: "farmer_id",
+          as: "farmer",
+        },
+      },
+      { $unwind: "$farmer" },
+      {
+        $lookup: {
+          from: "crops",
+          localField: "crop_id",
+          foreignField: "crop_id",
+          as: "crop",
+        },
+      },
+      { $unwind: "$crop" },
+
+      {
+        $project: {
+          _id: 0,
+          procurement_id:1,
+          request_id: 1,
+          quantity: 1,
+          createdAt: 1,
+          farmer_name: "$farmer.farmer_name",
+          crop_name: "$crop.crop_name",
+          crop_units: "$crop.crop_units",
+          cost_per_unit:1,
+          total_amount:1
+        },
+      },
+    ]);
+
+    res.status(200).send({
+      success: true,
+      data: finalizedProcurements,
+      message: "Successfully fetched the procurement requests.",
+    });
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      errror: error.message,
+      message: "Failed to fetch the procurement requests.",
+    });
+  }
+};
+
+exports.getPaymentDues = async (req, res) => {
+  const { buyer_id } = req.query;
+  try {
+    const paymentDues = await PaymentDue.aggregate([
+      // 1. Filter (WHERE)
+      {
+        $match: {
+          buyer_id: buyer_id,
+        },
+      },
+
+
+      // 2. JOIN farmers (optional, but you asked for name)
+      {
+        $lookup: {
+          from: "farmers",
+          localField: "farmer_id",
+          foreignField: "farmer_id",
+          as: "farmer",
+        },
+      },
+      { $unwind: "$farmer" },
+
+      // 3. SELECT (projection)
+      {
+        $project: {
+          _id: 0,
+          farmer_name: "$farmer.farmer_name",
+          total_procurement_amount: 1,
+          total_paid_amount: 1,
+          balance_amount: 1,
+        },
+      },
+    ]);
+    res.status(200).send({
+      success: true,
+      data: paymentDues,
+      message: "Successfully fetched the procurement.",
+    });
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      errror: error.message,
+      message: "Failed to fetch the finalized procurements.",
     });
   }
 };

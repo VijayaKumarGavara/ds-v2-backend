@@ -75,3 +75,5 @@ exports.getProcurementRequests = async (buyer_id) => {
     throw error;
   }
 };
+
+exports.ProcurementRequest = ProcurementRequest;

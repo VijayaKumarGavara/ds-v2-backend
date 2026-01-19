@@ -1,9 +1,12 @@
-const express=require("express");
-const buyerController=require("../controllers/buyerController");
+const express = require("express");
+const buyerController = require("../controllers/buyerController");
 
-const router=express.Router();
+const router = express.Router();
 
 router.post("/register", buyerController.registerBuyer);
 router.post("/login", buyerController.loginBuyer);
 router.patch("/update", buyerController.updateBuyer);
-module.exports=router;
+router.get("/procurement-requests", buyerController.getProcurementRequests);
+router.get("/procurements", buyerController.getProcurements);
+router.get("/payment-dues", buyerController.getPaymentDues);
+module.exports = router;
