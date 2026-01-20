@@ -9,4 +9,5 @@ router.patch("/update", buyerController.updateBuyer);
 router.get("/procurement-requests", buyerController.getProcurementRequests);
 router.get("/procurements", buyerController.getProcurements);
 router.get("/payment-dues", buyerController.getPaymentDues);
+router.get("/transactions", buyerController.getTransactions);
 module.exports = router;

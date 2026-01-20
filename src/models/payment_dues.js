@@ -50,17 +50,33 @@ exports.updatePaymentDue = async (query, total_amount, session) => {
   }
 };
 
-exports.findDue = async (farmer_id, buyer_id) => {
+exports.findDue = async (farmer_id, buyer_id, session) => {
   try {
     const result = await PaymentDue.findOne({
       farmer_id: farmer_id,
       buyer_id,
       buyer_id,
-    });
+    }).session(session);
     return result;
   } catch (error) {
     throw error;
   }
 };
 
+exports.applyPayment = async (query, amount, session) => {
+  try {
+    return PaymentDue.findOneAndUpdate(
+      query,
+      {
+        $inc: {
+          total_paid_amount: amount,
+          balance_amount: -amount,
+        },
+      },
+      { new: true, session }
+    );
+  } catch (error) {
+    throw error;
+  }
+};
 exports.PaymentDue = PaymentDue;

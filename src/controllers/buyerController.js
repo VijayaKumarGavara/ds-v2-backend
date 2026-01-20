@@ -1,7 +1,8 @@
 const Buyer = require("../models/buyer");
 const { ProcurementRequest } = require("../models/procurement_request");
-const {Procurement}=require("../models/procurement");
-const {PaymentDue}=require("../models/payment_dues");
+const { Procurement } = require("../models/procurement");
+const { PaymentDue } = require("../models/payment_dues");
+const { Transaction } = require("../models/transaction");
 const { comparePassword } = require("../utils/comparePassword");
 const { getHashedPassword } = require("../utils/getHashedPassword");
 
@@ -91,7 +92,6 @@ exports.getProcurementRequests = async (req, res) => {
         },
       },
 
-      
       {
         $lookup: {
           from: "farmers",
@@ -151,7 +151,6 @@ exports.getProcurements = async (req, res) => {
         },
       },
 
-      
       {
         $lookup: {
           from: "farmers",
@@ -174,15 +173,15 @@ exports.getProcurements = async (req, res) => {
       {
         $project: {
           _id: 0,
-          procurement_id:1,
+          procurement_id: 1,
           request_id: 1,
           quantity: 1,
           createdAt: 1,
           farmer_name: "$farmer.farmer_name",
           crop_name: "$crop.crop_name",
           crop_units: "$crop.crop_units",
-          cost_per_unit:1,
-          total_amount:1
+          cost_per_unit: 1,
+          total_amount: 1,
         },
       },
     ]);
@@ -211,7 +210,6 @@ exports.getPaymentDues = async (req, res) => {
           buyer_id: buyer_id,
         },
       },
-
 
       // 2. JOIN farmers (optional, but you asked for name)
       {
@@ -245,6 +243,49 @@ exports.getPaymentDues = async (req, res) => {
       success: false,
       errror: error.message,
       message: "Failed to fetch the finalized procurements.",
+    });
+  }
+};
+
+exports.getTransactions = async (req, res) => {
+  const { buyer_id } = req.query;
+  try {
+    const buyerTransactions = await Transaction.aggregate([
+      {
+        $match: {
+          buyer_id: buyer_id,
+        },
+      },
+      {
+        $lookup: {
+          from: "farmers",
+          localField: "farmer_id",
+          foreignField: "farmer_id",
+          as: "farmer",
+        },
+      },
+      { $unwind: "$farmer" },
+      {
+        $project: {
+          _id: 1,
+          farmer_name: "$farmer.farmer_name",
+          amount: 1,
+          balance_before: 1,
+          balance_after: 1,
+        },
+      },
+    ]);
+
+    res.status(200).send({
+      success: true,
+      data: buyerTransactions,
+      message: "Buyer Transactions fetched successfully.",
+    });
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      error: error.message,
+      message: "Failed to fetch the buyer transactions.",
     });
   }
 };

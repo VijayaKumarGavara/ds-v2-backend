@@ -2,6 +2,7 @@ const Farmer = require("../models/farmer");
 const { ProcurementRequest } = require("../models/procurement_request");
 const { Procurement } = require("../models/procurement");
 const { PaymentDue } = require("../models/payment_dues");
+const { Transaction } = require("../models/transaction");
 exports.registerFarmer = async (req, res) => {
   try {
     const result = await Farmer.registerFarmer(req.body);
@@ -236,4 +237,46 @@ exports.getPaymentDues = async (req, res) => {
     });
   }
 };
-exports.getTransactions = async (req, res) => {};
+
+exports.getTransactions = async (req, res) => {
+  const { farmer_id } = req.query;
+  try {
+    const farmerTransactions = await Transaction.aggregate([
+      {
+        $match: { farmer_id: farmer_id },
+      },
+      {
+        $lookup: {
+          from: "buyers",
+          localField: "buyer_id",
+          foreignField: "buyer_id",
+          as: "buyer",
+        },
+      },
+      {$unwind:"$buyer"},
+      {
+        $project: {
+          _id: 0,
+          buyer_name: "$buyer.buyer_name",
+          amount: 1,
+          balance_before: 1,
+          balance_after: 1,
+          createdAt:1
+        },
+      },
+    ]);
+    res
+      .status(200)
+      .send({
+        success: true,
+        data: farmerTransactions,
+        message: "Farmer Transactions fetched successfully.",
+      });
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      error: error.message,
+      message: "Failed to fetch the transactions.",
+    });
+  }
+};
