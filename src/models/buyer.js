@@ -17,7 +17,8 @@ const Buyer = mongoose.model("Buyer", buyerSchema);
 exports.registerBuyer = async (buyerInfo) => {
   try {
     const buyer = new Buyer(buyerInfo);
-    await buyer.save();
+    const result =await buyer.save();
+    return result;
   } catch (error) {
     throw error;
   }

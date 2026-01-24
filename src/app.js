@@ -1,5 +1,5 @@
 const express = require("express");
-
+const cors=require("cors");
 const { ConnectDB } = require("./config/database");
 
 const farmerRoutes = require("./routes/farmerRoutes");
@@ -11,7 +11,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const app = express();
 
 app.use(express.json());
-
+app.use(cors());
 app.use("/api/farmer", farmerRoutes);
 app.use("/api/buyer", buyerRoutes);
 app.use("/api/crop", cropRoutes);

@@ -3,19 +3,26 @@ const { ProcurementRequest } = require("../models/procurement_request");
 const { Procurement } = require("../models/procurement");
 const { PaymentDue } = require("../models/payment_dues");
 const { Transaction } = require("../models/transaction");
+
 const { comparePassword } = require("../utils/comparePassword");
 const { getHashedPassword } = require("../utils/getHashedPassword");
-
+const { generateId } = require("../utils/generateId");
+const { generateToken } = require("../utils/jwt");
 exports.registerBuyer = async (req, res) => {
   try {
     const data = req.body;
     const hashedPassword = await getHashedPassword(data.buyer_password);
     data.buyer_password = hashedPassword;
+    data.buyer_id = generateId("B");
     const result = await Buyer.registerBuyer(data);
+    const { buyer_name, buyer_id, buyer_mobile, buyer_village } = result;
+    const token = generateToken({ buyer_id, buyer_mobile });
     res.status(200).send({
       success: true,
       message: "Buyer Registered Successfully.",
-      data: result,
+      data: { buyer_name, buyer_id, buyer_mobile, buyer_village },
+      token,
+      role: "buyer",
     });
   } catch (error) {
     res.status(400).send({
@@ -38,7 +45,7 @@ exports.loginBuyer = async (req, res) => {
     }
     const isMatch = await comparePassword(
       buyer_password,
-      buyerResults[0]?.buyer_password
+      buyerResults[0]?.buyer_password,
     );
     if (!isMatch) {
       res.status(401).send({
@@ -47,10 +54,22 @@ exports.loginBuyer = async (req, res) => {
           "Invalid login credentials. Please check your mobile number and password",
       });
     }
+    const { buyer_id, buyer_name, buyer_village } = buyerResults[0];
+    const token = generateToken({
+      buyer_id,
+      buyer_mobile: buyerResults[0]?.buyer_mobile,
+    });
     res.status(200).send({
       success: true,
       message: "Logged in Successfully.",
-      data: buyerResults[0],
+      data: {
+        buyer_id,
+        buyer_name,
+        buyer_mobile: buyerResults[0]?.buyer_mobile,
+        buyer_village,
+      },
+      token,
+      role: "buyer",
     });
   } catch (error) {
     res.status(400).send({
@@ -64,10 +83,8 @@ exports.loginBuyer = async (req, res) => {
 exports.updateBuyer = async (req, res) => {
   const data = req.body;
   const { buyer_id } = req.body;
-  console.log(req.body);
   try {
     const result = await Buyer.updateBuyer(buyer_id, data);
-    console.log({ result });
     res.status(201).send({
       data: result,
       success: true,
@@ -226,6 +243,7 @@ exports.getPaymentDues = async (req, res) => {
       {
         $project: {
           _id: 0,
+          due_id:1,
           farmer_name: "$farmer.farmer_name",
           total_procurement_amount: 1,
           total_paid_amount: 1,
