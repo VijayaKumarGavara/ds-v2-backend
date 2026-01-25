@@ -6,7 +6,7 @@ exports.recordPayment = async (req, res) => {
   const session = await mongoose.startSession();
 
   try {
-    const { farmer_id, buyer_id, amount, remarks } = req.body;
+    const { due_id, farmer_id, buyer_id, amount, remarks } = req.body;
 
     if (amount <= 0) {
       throw new Error("Payment amount must be greater than zero");
@@ -14,7 +14,7 @@ exports.recordPayment = async (req, res) => {
 
     await session.startTransaction();
     // 1. find existing due
-    const due = await PaymentDue.findDue(farmer_id, buyer_id, session);
+    const due = await PaymentDue.findDue(farmer_id, buyer_id, due_id, session);
 
     if (!due) {
       throw new Error("No payment due exists for this farmer and buyer");
@@ -28,9 +28,9 @@ exports.recordPayment = async (req, res) => {
 
     // 2. update due
     const updatedDue = await PaymentDue.applyPayment(
-      { farmer_id, buyer_id },
+      { due_id, farmer_id, buyer_id },
       amount,
-      session
+      session,
     );
 
     // 3. create transaction
@@ -45,10 +45,10 @@ exports.recordPayment = async (req, res) => {
     };
     const transactionResponse = await Transaction.createTransaction(
       transactionInfo,
-      session
+      session,
     );
 
-    session.commitTransaction();
+    await session.commitTransaction();
     session.endSession();
     res.status(200).send({
       success: true,
@@ -56,7 +56,7 @@ exports.recordPayment = async (req, res) => {
       message: "Payment recorded successfully",
     });
   } catch (error) {
-    session.abortTransaction();
+    await session.abortTransaction();
     session.endSession();
     res.status(400).send({
       success: false,

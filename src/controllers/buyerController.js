@@ -244,6 +244,7 @@ exports.getPaymentDues = async (req, res) => {
         $project: {
           _id: 0,
           due_id:1,
+          farmer_id:"$farmer.farmer_id",
           farmer_name: "$farmer.farmer_name",
           total_procurement_amount: 1,
           total_paid_amount: 1,

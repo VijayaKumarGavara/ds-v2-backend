@@ -50,12 +50,12 @@ exports.updatePaymentDue = async (query, total_amount, session) => {
   }
 };
 
-exports.findDue = async (farmer_id, buyer_id, session) => {
+exports.findDue = async (farmer_id, buyer_id,due_id, session) => {
   try {
     const result = await PaymentDue.findOne({
       farmer_id: farmer_id,
-      buyer_id,
-      buyer_id,
+      buyer_id:buyer_id,
+      due_id:due_id,
     }).session(session);
     return result;
   } catch (error) {
