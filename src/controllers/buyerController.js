@@ -3,6 +3,7 @@ const { ProcurementRequest } = require("../models/procurement_request");
 const { Procurement } = require("../models/procurement");
 const { PaymentDue } = require("../models/payment_dues");
 const { Transaction } = require("../models/transaction");
+const Farmer = require("../models/farmer");
 
 const { comparePassword } = require("../utils/comparePassword");
 const { getHashedPassword } = require("../utils/getHashedPassword");
@@ -98,6 +99,40 @@ exports.updateBuyer = async (req, res) => {
   }
 };
 
+exports.findFarmers = async (req, res) => {
+  const { farmer_name, farmer_village, farmer_mobile, farmer_id } = req.body;
+
+    const filters = {
+      farmer_name: farmer_name?.trim(),
+      farmer_village: farmer_village?.trim(),
+      farmer_mobile: farmer_mobile?.trim(),
+      farmer_id: farmer_id?.trim(),
+    };
+
+  try {
+    const farmerResults = await Farmer.findFarmers(filters);
+    if (farmerResults.length === 0) {
+      res.status(200).send({
+        success: true,
+        message: "No matching results found.",
+        data: farmerResults,
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: farmerResults,
+        message: "Successfully found the farmer.",
+      });
+    }
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      error: error.message,
+      message: "Error while finding the famrers",
+    });
+  }
+};
+
 exports.getProcurementRequests = async (req, res) => {
   const { buyer_id } = req.query;
   try {
@@ -141,6 +176,9 @@ exports.getProcurementRequests = async (req, res) => {
           crop_name: "$crop.crop_name",
           crop_units: "$crop.crop_units",
         },
+      },
+      {
+        $sort: { createdAt: -1 },
       },
     ]);
 
@@ -243,8 +281,8 @@ exports.getPaymentDues = async (req, res) => {
       {
         $project: {
           _id: 0,
-          due_id:1,
-          farmer_id:"$farmer.farmer_id",
+          due_id: 1,
+          farmer_id: "$farmer.farmer_id",
           farmer_name: "$farmer.farmer_name",
           total_procurement_amount: 1,
           total_paid_amount: 1,
@@ -291,7 +329,11 @@ exports.getTransactions = async (req, res) => {
           amount: 1,
           balance_before: 1,
           balance_after: 1,
+          createdAt: 1,
         },
+      },
+      {
+        $sort: { createdAt: -1 },
       },
     ]);
 

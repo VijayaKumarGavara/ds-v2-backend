@@ -6,6 +6,7 @@ const router = express.Router();
 router.post("/register", buyerController.registerBuyer);
 router.post("/login", buyerController.loginBuyer);
 router.patch("/update", buyerController.updateBuyer);
+router.post("/find-farmers", buyerController.findFarmers);
 router.get("/procurement-requests", buyerController.getProcurementRequests);
 router.get("/procurements", buyerController.getProcurements);
 router.get("/payment-dues", buyerController.getPaymentDues);
