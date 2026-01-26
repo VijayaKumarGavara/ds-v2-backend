@@ -6,7 +6,7 @@ const cropSchema = mongoose.Schema(
     crop_name: { type: String },
     crop_units: { type: String },
   },
-  { timestamps: true, strict: false }
+  { timestamps: true, strict: false },
 );
 const Crop = mongoose.model("Crop", cropSchema);
 
@@ -34,9 +34,21 @@ exports.updateCrop = async (crop_id, data) => {
     const updatedData = await Crop.findOneAndUpdate(
       { crop_id: crop_id },
       data,
-      { returnDocument: "after" }
+      { returnDocument: "after" },
     );
     return updatedData;
+  } catch (error) {
+    throw error;
+  }
+};
+
+exports.getCropUnits = async (query) => {
+  try {
+    const results = await Crop.findOne(
+       query ,
+      { crop_name: 1, crop_units: 1, crop_id:1 },
+    );
+    return results;
   } catch (error) {
     throw error;
   }

@@ -83,7 +83,7 @@ exports.findFarmers = async (filters) => {
       throw new Error("At least one valid search parameter is required");
     }
 
-    return await Farmer.find({ $or: orConditions });
+    return await Farmer.find({ $or: orConditions },{farmer_id:1, farmer_name:1, farmer_mobile:1, farmer_village:1});
   } catch (error) {
     throw error;
   }
