@@ -1,79 +1,98 @@
 const { Schema, model } = require("mongoose");
 
-const procurementRequestScheam = Schema(
+const procurementRequestSchema = new Schema(
   {
-    request_id: { type: String },
-    farmer_id: { type: String },
-    buyer_id: { type: String },
-    crop_id: { type: String },
-    quantity: { type: Number },
-    status: { type: String },
+    request_id: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    buyer_id: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    farmer_id: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    crop_id: {
+      type: String,
+      required: true,
+    },
+
+    quantity: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    crop_units: {
+      type: String,
+      enum: ["kg", "quintal", "ton"],
+      required: true,
+    },
+
+    status: {
+      type: String,
+      enum: ["pending", "finalized", "rejected"],
+      default: "pending",
+      index: true,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    strict: true,
+  },
 );
 
 const ProcurementRequest = model(
   "Procurement_Request",
-  procurementRequestScheam
+  procurementRequestSchema,
 );
 
 exports.createProcurementRequest = async (data) => {
-  try {
-    const procurementRequest = new ProcurementRequest(data);
-    const result = await procurementRequest.save();
-    return result;
-  } catch (error) {
-    throw error;
-  }
+  const procurementRequest = new ProcurementRequest(data);
+  const result = await procurementRequest.save();
+  return result;
 };
 
-exports.updateProcurementRequest = async (query, data) => {
-  try {
-    const updatedData = await ProcurementRequest.findOneAndUpdate(
-      query,
-      data,
-      { returnDocument: "after" }
-    );
-    return updatedData;
-  } catch (error) {
-    throw error;
-  }
+exports.updateProcurementRequest = async (query, data, options = {}) => {
+  return ProcurementRequest.findOneAndUpdate(query, data, {
+    returnDocument: "after",
+    ...options,
+  });
 };
 
-exports.deleteProcurementRequest = async (request_id) => {
-  try {
-    const count = await ProcurementRequest.deleteOne({
-      request_id: request_id,
-    });
-
-    return count;
-  } catch (error) {
-    throw error;
-  }
+exports.deleteProcurementRequest = async (request_id, buyer_id) => {
+  return ProcurementRequest.deleteOne({
+    request_id,
+    buyer_id, // ownership protection
+  });
 };
 
 exports.getProcurementRequestStatus = async (request_id) => {
-  try {
-    const result = await ProcurementRequest.findOne({
-      request_id: request_id,
-    });
-
-    return result;
-  } catch (error) {
-    throw error;
-  }
+  return ProcurementRequest.findOne({ request_id });
 };
 
 exports.getProcurementRequests = async (buyer_id) => {
-  try {
-    const result = await ProcurementRequest.find({
-      buyer_id: buyer_id,
-    });
-
-    return result;
-  } catch (error) {
-    throw error;
-  }
+  return ProcurementRequest.find(
+    { buyer_id },
+    {
+      request_id: 1,
+      farmer_id: 1,
+      crop_id: 1,
+      quantity: 1,
+      crop_units: 1,
+      status: 1,
+      createdAt: 1,
+    },
+  ).sort({ createdAt: -1 });
 };
 
 exports.ProcurementRequest = ProcurementRequest;

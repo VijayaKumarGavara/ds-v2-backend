@@ -8,10 +8,15 @@ const cropRoutes = require("./routes/cropRoutes");
 const procurementRequestRoutes = require("./routes/procurementReuqestRoutes");
 const procurementRoutes = require("./routes/procurementRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const authRoutes = require("./routes/authRoutes");
+
+
 const app = express();
 
 app.use(express.json());
 app.use(cors());
+
+app.use("/api/auth", authRoutes);
 app.use("/api/farmer", farmerRoutes);
 app.use("/api/buyer", buyerRoutes);
 app.use("/api/crop", cropRoutes);

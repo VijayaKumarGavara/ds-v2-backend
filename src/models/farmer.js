@@ -1,16 +1,70 @@
 const mongoose = require("mongoose");
 
-const farmerSchema = mongoose.Schema(
+const farmerSchema = new mongoose.Schema(
   {
-    farmer_id: { type: String },
-    farmer_name: { type: String },
-    farmer_mobile: { type: String },
-    farmer_village: { type: String },
-    farmer_image_path: { type: String },
-    farmer_qrcode_path: { type: String },
-    status: { type: String },
+    farmer_id: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    farmer_name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    farmer_village: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    farmer_mobile: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    farmer_password: {
+      type: String,
+      required: true,
+      select: false,
+    },
+
+    farmer_image_path: {
+      type: String,
+      default: null,
+    },
+
+    farmer_qrcode_path: {
+      type: String,
+      default: null,
+    },
+
+    status: {
+      type: String,
+      enum: ["active", "inactive", "blocked"],
+      default: "active",
+    },
+
+    registered_by: {
+      type: String,
+      enum: ["self", "buyer"],
+      default: "self",
+    },
+
+    registered_by_buyer_id: {
+      type: String,
+      default: null,
+    },
   },
-  { timestamps: true, strict: false },
+  {
+    timestamps: true,
+    strict: true,
+  },
 );
 
 const Farmer = mongoose.model("Farmer", farmerSchema);
@@ -22,6 +76,14 @@ exports.registerFarmer = async (farmerInfo) => {
   } catch (error) {
     throw error;
   }
+};
+
+exports.findFarmerById = async (farmer_id) => {
+  return Farmer.findOne({ farmer_id });
+};
+
+exports.findFarmerByMobile = async (farmer_mobile) => {
+  return Farmer.findOne({ farmer_mobile }).select("+farmer_password");
 };
 
 exports.getProfile = async (farmer_id) => {
@@ -83,10 +145,11 @@ exports.findFarmers = async (filters) => {
       throw new Error("At least one valid search parameter is required");
     }
 
-    return await Farmer.find({ $or: orConditions },{farmer_id:1, farmer_name:1, farmer_mobile:1, farmer_village:1});
+    return await Farmer.find(
+      { $or: orConditions },
+      { farmer_id: 1, farmer_name: 1, farmer_mobile: 1, farmer_village: 1 },
+    ).limit(20);
   } catch (error) {
     throw error;
   }
 };
-
-

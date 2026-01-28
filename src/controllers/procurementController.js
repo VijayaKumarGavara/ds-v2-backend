@@ -12,7 +12,7 @@ exports.createProcurement = async (req, res) => {
     const request = await ProcurementRequest.updateProcurementRequest(
       { request_id: requestInfo.request_id, status: "pending" },
       { status: "finalized" },
-      { new: true, session: session },
+      { new: true, session },
     );
     const { farmer_id, buyer_id, crop_id, quantity, request_id } = request;
     if (!request) {
@@ -20,7 +20,7 @@ exports.createProcurement = async (req, res) => {
     }
     const total_amount = quantity * Number(requestInfo.cost_per_unit);
     const procuremetInput = {
-      procurement_id: generateId("p"),
+      procurement_id: generateId("P"),
       request_id,
       farmer_id,
       buyer_id,
@@ -32,10 +32,22 @@ exports.createProcurement = async (req, res) => {
     const procurement = await Procurement.createProcurement(procuremetInput, {
       session: session,
     });
-    
+
+    let due_id;
+    const existingDue = await PaymentDue.existingDue(
+      farmer_id,
+      buyer_id,
+      session,
+    );
+    if (existingDue) {
+      due_id = existingDue.due_id; // reuse
+    } else {
+      due_id = generateId("DUE"); // create new
+    }
     const due = await PaymentDue.updatePaymentDue(
       { farmer_id, buyer_id },
       total_amount,
+      due_id,
       session,
     );
 
@@ -43,7 +55,7 @@ exports.createProcurement = async (req, res) => {
     session.endSession();
     res.status(200).send({
       success: true,
-      data: [procurement,due],
+      data: [procurement, due],
       message: "Successfully created the procurement.",
     });
   } catch (error) {

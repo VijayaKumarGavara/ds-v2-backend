@@ -3,15 +3,74 @@ const { ProcurementRequest } = require("../models/procurement_request");
 const { Procurement } = require("../models/procurement");
 const { PaymentDue } = require("../models/payment_dues");
 const { Transaction } = require("../models/transaction");
+const {generateId} = require("../utils/generateId");
+const {getHashedPassword} = require("../utils/getHashedPassword");
+const {comparePassword}=require("../utils/comparePassword")
+const {generateToken}=require("../utils/jwt");
 exports.registerFarmer = async (req, res) => {
   try {
-    const result = await Farmer.registerFarmer(req.body);
+    const { farmer_password } = req.body;
+    const hashedPassword = await getHashedPassword(farmer_password);
+    const farmerInfo = {
+      ...req.body,
+      farmer_id: generateId("F"),
+      farmer_password: hashedPassword,
+    };
+    const result = await Farmer.registerFarmer(farmerInfo);
     res
       .status(200)
       .send({ data: result, message: "Farmer Registered Successfully." });
   } catch (error) {
     res.status(400).send({
       message: "Something went wrong while registering the farmer.",
+      error: error.message,
+    });
+  }
+};
+
+exports.loginFarmer = async (req, res) => {
+  const { farmer_mobile, farmer_password } = req.body;
+  try {
+    const farmerResults = await Farmer.findFarmerByMobile(farmer_mobile);
+    if (!farmerResults) {
+      res.status(401).send({
+        success: false,
+        message:
+          "Invalid login credentials. Please check your mobile number and password",
+      });
+    }
+    const isMatch = await comparePassword(
+      farmer_password,
+      farmerResults?.farmer_password,
+    );
+    if (!isMatch) {
+      res.status(401).send({
+        success: false,
+        message:
+          "Invalid login credentials. Please check your mobile number and password",
+      });
+    }
+    const { farmer_id, farmer_name, farmer_village } = farmerResults;
+    const token = generateToken({
+      user_id: farmer_id,
+      role: "farmer",
+    });
+    res.status(200).send({
+      success: true,
+      message: "Logged in Successfully.",
+      data: {
+        farmer_id,
+        farmer_name,
+        farmer_mobile: farmerResults[0]?.farmer_mobile,
+        farmer_village,
+      },
+      token,
+      role: "farmer",
+    });
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      message: "Something went wrong while logging in.",
       error: error.message,
     });
   }
@@ -253,7 +312,7 @@ exports.getTransactions = async (req, res) => {
           as: "buyer",
         },
       },
-      {$unwind:"$buyer"},
+      { $unwind: "$buyer" },
       {
         $project: {
           _id: 0,
@@ -261,17 +320,15 @@ exports.getTransactions = async (req, res) => {
           amount: 1,
           balance_before: 1,
           balance_after: 1,
-          createdAt:1
+          createdAt: 1,
         },
       },
     ]);
-    res
-      .status(200)
-      .send({
-        success: true,
-        data: farmerTransactions,
-        message: "Farmer Transactions fetched successfully.",
-      });
+    res.status(200).send({
+      success: true,
+      data: farmerTransactions,
+      message: "Farmer Transactions fetched successfully.",
+    });
   } catch (error) {
     res.status(400).send({
       success: false,

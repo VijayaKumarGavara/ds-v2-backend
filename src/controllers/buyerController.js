@@ -37,7 +37,7 @@ exports.loginBuyer = async (req, res) => {
   const { buyer_mobile, buyer_password } = req.body;
   try {
     const buyerResults = await Buyer.findBuyerByMobile(buyer_mobile);
-    if (buyerResults.length === 0) {
+    if (!buyerResults) {
       res.status(401).send({
         success: false,
         message:
@@ -46,7 +46,7 @@ exports.loginBuyer = async (req, res) => {
     }
     const isMatch = await comparePassword(
       buyer_password,
-      buyerResults[0]?.buyer_password,
+      buyerResults?.buyer_password,
     );
     if (!isMatch) {
       res.status(401).send({
@@ -55,10 +55,10 @@ exports.loginBuyer = async (req, res) => {
           "Invalid login credentials. Please check your mobile number and password",
       });
     }
-    const { buyer_id, buyer_name, buyer_village } = buyerResults[0];
+    const { buyer_id, buyer_name, buyer_village } = buyerResults;
     const token = generateToken({
-      buyer_id,
-      buyer_mobile: buyerResults[0]?.buyer_mobile,
+      user_id:buyer_id,
+      role:"buyer",
     });
     res.status(200).send({
       success: true,
@@ -66,7 +66,7 @@ exports.loginBuyer = async (req, res) => {
       data: {
         buyer_id,
         buyer_name,
-        buyer_mobile: buyerResults[0]?.buyer_mobile,
+        buyer_mobile: buyerResults?.buyer_mobile,
         buyer_village,
       },
       token,

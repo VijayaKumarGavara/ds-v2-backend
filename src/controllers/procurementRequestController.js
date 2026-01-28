@@ -1,8 +1,17 @@
 const ProcurementRequest = require("../models/procurement_request");
+const { generateId } = require("../utils/generateId");
 
 exports.createProcurmentRequest = async (req, res) => {
+  
   try {
-    const result = await ProcurementRequest.createProcurementRequest(req.body);
+    const procurementRequestInfo = {
+      ...req.body,
+      request_id: generateId("PR"),
+      status: "pending",
+    };
+    const result = await ProcurementRequest.createProcurementRequest(
+      procurementRequestInfo,
+    );
     res.status(200).send({
       success: true,
       data: result,
@@ -31,7 +40,7 @@ exports.updateProcurementRequest = async (req, res) => {
     }
     const result = await ProcurementRequest.updateProcurementRequest(
       request_id,
-      req.body
+      req.body,
     );
     res.status(200).send({
       success: true,
@@ -59,9 +68,8 @@ exports.deleteProcurementRequest = async (req, res) => {
       });
       return;
     }
-    const result = await ProcurementRequest.deleteProcurementRequest(
-      request_id
-    );
+    const result =
+      await ProcurementRequest.deleteProcurementRequest(request_id);
     res.status(200).send({
       success: true,
       data: result,
@@ -80,13 +88,11 @@ exports.getProcurementRequests = async (req, res) => {
   const { buyer_id } = req.body;
   try {
     const result = await ProcurementRequest.getProcurementRequests(buyer_id);
-    res
-      .status(200)
-      .send({
-        success: true,
-        data: result,
-        message: "Procurement Requests Fetched Succcessfully.",
-      });
+    res.status(200).send({
+      success: true,
+      data: result,
+      message: "Procurement Requests Fetched Succcessfully.",
+    });
   } catch (error) {
     res.status(400).send({
       success: false,

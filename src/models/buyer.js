@@ -1,45 +1,71 @@
 const mongoose = require("mongoose");
 
-const buyerSchema = mongoose.Schema(
+const buyerSchema = new mongoose.Schema(
   {
-    buyer_id: { type: String },
-    buyer_name: { type: String },
-    buyer_village: { type: String },
-    buyer_mobile: { type: String },
-    buyer_password: { type: String },
-    status: { type: String },
+    buyer_id: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    buyer_name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    buyer_village: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    buyer_mobile: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    buyer_password: {
+      type: String,
+      required: true,
+      select: false, 
+    },
+
+    status: {
+      type: String,
+      enum: ["active", "inactive", "blocked"],
+      default: "active",
+    },
   },
-  { timestamps: true, strict: false }
+  {
+    timestamps: true,
+    strict: true, 
+  }
 );
 
 const Buyer = mongoose.model("Buyer", buyerSchema);
 
+
 exports.registerBuyer = async (buyerInfo) => {
-  try {
-    const buyer = new Buyer(buyerInfo);
-    const result =await buyer.save();
-    return result;
-  } catch (error) {
-    throw error;
-  }
+  const buyer = new Buyer(buyerInfo);
+  return buyer.save();
 };
 
 exports.findBuyerByMobile = async (buyer_mobile) => {
-  try {
-    const buyer = await Buyer.find({ buyer_mobile: buyer_mobile });
-    return buyer;
-  } catch (error) {
-    throw error;
-  }
+  return Buyer.findOne({ buyer_mobile }).select("+buyer_password");
+};
+
+exports.findBuyerById = async (buyer_id) => {
+  return Buyer.findOne({ buyer_id });
 };
 
 exports.updateBuyer = async (buyer_id, data) => {
-  try {
-    const result = await Buyer.findOneAndUpdate({ buyer_id: buyer_id }, data, {
-      returnDocument: "after",
-    });
-    return result;
-  } catch (error) {
-    throw error;
-  }
+  return Buyer.findOneAndUpdate(
+    { buyer_id },
+    data,
+    { returnDocument: "after" }
+  );
 };
