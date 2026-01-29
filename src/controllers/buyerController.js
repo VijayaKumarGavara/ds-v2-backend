@@ -57,8 +57,8 @@ exports.loginBuyer = async (req, res) => {
     }
     const { buyer_id, buyer_name, buyer_village } = buyerResults;
     const token = generateToken({
-      user_id:buyer_id,
-      role:"buyer",
+      user_id: buyer_id,
+      role: "buyer",
     });
     res.status(200).send({
       success: true,
@@ -102,12 +102,12 @@ exports.updateBuyer = async (req, res) => {
 exports.findFarmers = async (req, res) => {
   const { farmer_name, farmer_village, farmer_mobile, farmer_id } = req.body;
 
-    const filters = {
-      farmer_name: farmer_name?.trim(),
-      farmer_village: farmer_village?.trim(),
-      farmer_mobile: farmer_mobile?.trim(),
-      farmer_id: farmer_id?.trim(),
-    };
+  const filters = {
+    farmer_name: farmer_name?.trim(),
+    farmer_village: farmer_village?.trim(),
+    farmer_mobile: farmer_mobile?.trim(),
+    farmer_id: farmer_id?.trim(),
+  };
 
   try {
     const farmerResults = await Farmer.findFarmers(filters);
@@ -129,6 +129,67 @@ exports.findFarmers = async (req, res) => {
       success: false,
       error: error.message,
       message: "Error while finding the famrers",
+    });
+  }
+};
+
+exports.getRecentFarmers = async (req, res) => {
+  try {
+    const { buyer_id } = req.query; // 🔐 take from token, not query
+
+    const recentFarmers = await ProcurementRequest.aggregate([
+      {
+        $match: { buyer_id },
+      },
+
+      {
+        $sort: { createdAt: -1 },
+      },
+
+      {
+        $group: {
+          _id: "$farmer_id",
+          lastPurchaseAt: { $first: "$createdAt" },
+        },
+      },
+
+      {
+        $lookup: {
+          from: "farmers",
+          localField: "_id",
+          foreignField: "farmer_id",
+          as: "farmer",
+        },
+      },
+
+      { $unwind: "$farmer" },
+
+      {
+        $project: {
+          _id: 0,
+          farmer_id: "$farmer.farmer_id",
+          farmer_name: "$farmer.farmer_name",
+          farmer_mobile: "$farmer.farmer_mobile",
+          farmer_village:"$farmer.farmer_village",
+          lastPurchaseAt: 1,
+        },
+      },
+
+      {
+        $sort: { lastPurchaseAt: -1 },
+      },
+    ]);
+
+    res.status(200).send({
+      success: true,
+      data: recentFarmers,
+      message: "Successfully fetched recent farmers",
+    });
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      error: error.message,
+      message: "Failed to fetch recent farmers",
     });
   }
 };
