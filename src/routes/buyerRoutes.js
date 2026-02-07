@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.post("/register", buyerController.registerBuyer);
 router.post("/login", buyerController.loginBuyer);
+router.get("/profile", buyerController.getProfile);
 router.patch("/update", buyerController.updateBuyer);
 router.post("/find-farmers", buyerController.findFarmers);
 router.get("/recent-farmers", buyerController.getRecentFarmers);

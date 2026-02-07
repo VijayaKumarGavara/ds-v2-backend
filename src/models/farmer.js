@@ -72,7 +72,8 @@ const Farmer = mongoose.model("Farmer", farmerSchema);
 exports.registerFarmer = async (farmerInfo) => {
   const farmer = new Farmer(farmerInfo);
   try {
-    await farmer.save();
+    const result = await farmer.save();
+    return result;
   } catch (error) {
     throw error;
   }
@@ -88,7 +89,7 @@ exports.findFarmerByMobile = async (farmer_mobile) => {
 
 exports.getProfile = async (farmer_id) => {
   try {
-    const data = await Farmer.find({ farmer_id: farmer_id });
+    const data = await Farmer.findOne({ farmer_id: farmer_id });
     return data;
   } catch (error) {
     throw error;

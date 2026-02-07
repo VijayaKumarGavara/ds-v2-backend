@@ -56,9 +56,9 @@ const ProcurementRequest = model(
   procurementRequestSchema,
 );
 
-exports.createProcurementRequest = async (data) => {
+exports.createProcurementRequest = async (data, session) => {
   const procurementRequest = new ProcurementRequest(data);
-  const result = await procurementRequest.save();
+  const result = await procurementRequest.save({session});
   return result;
 };
 

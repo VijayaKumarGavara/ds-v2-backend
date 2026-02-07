@@ -81,6 +81,21 @@ exports.loginBuyer = async (req, res) => {
   }
 };
 
+exports.getProfile = async (req, res) => {
+  const { buyer_id } = req.query;
+  try {
+    const data = await Buyer.findBuyerById(buyer_id);
+    res
+      .status(200)
+      .send({ data: data, message: "Buyers Data fetched successfully." });
+  } catch (error) {
+    res.status(400).send({
+      message: "Something went wrong while fetching the buyers.",
+      error: error.message,
+    });
+  }
+};
+
 exports.updateBuyer = async (req, res) => {
   const data = req.body;
   const { buyer_id } = req.body;
@@ -170,7 +185,7 @@ exports.getRecentFarmers = async (req, res) => {
           farmer_id: "$farmer.farmer_id",
           farmer_name: "$farmer.farmer_name",
           farmer_mobile: "$farmer.farmer_mobile",
-          farmer_village:"$farmer.farmer_village",
+          farmer_village: "$farmer.farmer_village",
           lastPurchaseAt: 1,
         },
       },

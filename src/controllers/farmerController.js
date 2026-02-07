@@ -3,10 +3,10 @@ const { ProcurementRequest } = require("../models/procurement_request");
 const { Procurement } = require("../models/procurement");
 const { PaymentDue } = require("../models/payment_dues");
 const { Transaction } = require("../models/transaction");
-const {generateId} = require("../utils/generateId");
-const {getHashedPassword} = require("../utils/getHashedPassword");
-const {comparePassword}=require("../utils/comparePassword")
-const {generateToken}=require("../utils/jwt");
+const { generateId } = require("../utils/generateId");
+const { getHashedPassword } = require("../utils/getHashedPassword");
+const { comparePassword } = require("../utils/comparePassword");
+const { generateToken } = require("../utils/jwt");
 exports.registerFarmer = async (req, res) => {
   try {
     const { farmer_password } = req.body;
@@ -17,9 +17,15 @@ exports.registerFarmer = async (req, res) => {
       farmer_password: hashedPassword,
     };
     const result = await Farmer.registerFarmer(farmerInfo);
+    const safeFarmer = {
+      farmer_id: result.farmer_id,
+      farmer_name: result.farmer_name,
+      farmer_village: result.farmer_village,
+      farmer_mobile: result.farmer_mobile,
+    };
     res
       .status(200)
-      .send({ data: result, message: "Farmer Registered Successfully." });
+      .send({ data: safeFarmer, message: "Farmer Registered Successfully." });
   } catch (error) {
     res.status(400).send({
       message: "Something went wrong while registering the farmer.",
@@ -33,7 +39,7 @@ exports.loginFarmer = async (req, res) => {
   try {
     const farmerResults = await Farmer.findFarmerByMobile(farmer_mobile);
     if (!farmerResults) {
-      res.status(401).send({
+      return res.status(401).send({
         success: false,
         message:
           "Invalid login credentials. Please check your mobile number and password",
@@ -44,7 +50,7 @@ exports.loginFarmer = async (req, res) => {
       farmerResults?.farmer_password,
     );
     if (!isMatch) {
-      res.status(401).send({
+      return res.status(401).send({
         success: false,
         message:
           "Invalid login credentials. Please check your mobile number and password",
@@ -55,7 +61,7 @@ exports.loginFarmer = async (req, res) => {
       user_id: farmer_id,
       role: "farmer",
     });
-    res.status(200).send({
+    return res.status(200).send({
       success: true,
       message: "Logged in Successfully.",
       data: {
@@ -68,7 +74,7 @@ exports.loginFarmer = async (req, res) => {
       role: "farmer",
     });
   } catch (error) {
-    res.status(400).send({
+    return res.status(400).send({
       success: false,
       message: "Something went wrong while logging in.",
       error: error.message,
@@ -77,7 +83,7 @@ exports.loginFarmer = async (req, res) => {
 };
 
 exports.getProfile = async (req, res) => {
-  const { farmer_id } = req.body;
+  const { farmer_id } = req.query;
   try {
     const data = await Farmer.getProfile(farmer_id);
     res

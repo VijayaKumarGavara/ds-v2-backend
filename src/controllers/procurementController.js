@@ -3,6 +3,7 @@ const Procurement = require("../models/procurement");
 const ProcurementRequest = require("../models/procurement_request");
 const PaymentDue = require("../models/payment_dues");
 const { generateId } = require("../utils/generateId");
+
 exports.createProcurement = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -69,3 +70,98 @@ exports.createProcurement = async (req, res) => {
     });
   }
 };
+
+exports.createFinalizedProcurement = async (req, res) => {
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    const {
+      farmer_id,
+      buyer_id,
+      crop_id,
+      crop_units,
+      quantity,
+      cost_per_unit,
+    } = req.body;
+
+    if (!farmer_id || !buyer_id || !crop_id || !quantity || !cost_per_unit) {
+      throw new Error("Missing required fields");
+    }
+
+    const requestPayload = {
+      request_id: generateId("PR"),
+      farmer_id,
+      buyer_id,
+      crop_id,
+      crop_units,
+      quantity,
+      status: "finalized",
+    };
+
+    const request =
+      await ProcurementRequest.createProcurementRequest(
+        requestPayload,
+        session
+      );
+
+    const total_amount = Number(quantity) * Number(cost_per_unit);
+
+    const procurementPayload = {
+      procurement_id: generateId("P"),
+      request_id: request.request_id,
+      farmer_id,
+      buyer_id,
+      crop_id,
+      quantity,
+      cost_per_unit,
+      total_amount,
+    };
+
+    const procurement =
+      await Procurement.createProcurement(procurementPayload, { session });
+
+    let due_id;
+
+    const existingDue =
+      await PaymentDue.existingDue(farmer_id, buyer_id, session);
+
+    if (existingDue) {
+      due_id = existingDue.due_id;
+    } else {
+      due_id = generateId("DUE");
+    }
+
+    const due =
+      await PaymentDue.updatePaymentDue(
+        { farmer_id, buyer_id },
+        total_amount,
+        due_id,
+        session
+      );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).send({
+      success: true,
+      message: "Spot procurement finalized successfully",
+      data: {
+        procurement,
+        due,
+      },
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+
+    res.status(400).send({
+      success: false,
+      message: "Failed to finalize procurement",
+      error: error.message,
+    });
+  }
+};
+
