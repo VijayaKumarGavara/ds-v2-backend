@@ -1,15 +1,18 @@
 const express = require("express");
 const farmerController = require("../controllers/farmerController");
 
+const authenticate = require("../middlewares/authMiddleware");
+const authorizeRole = require("../middlewares/authorizeRole");
+
 const router = express.Router();
 
 router.post("/register", farmerController.registerFarmer);
 router.post("/login", farmerController.loginFarmer);
-router.get("/profile", farmerController.getProfile);
-router.patch("/update", farmerController.updateProfile);
-router.get("/sales", farmerController.getSellingRecords);
-router.get("/sales/finalized", farmerController.getFinalizedRecords);
-router.get("/payment-dues", farmerController.getPaymentDues);
-router.get("/transactions", farmerController.getTransactions);
+router.get("/profile",  authenticate, authorizeRole("farmer"),farmerController.getProfile);
+router.patch("/update",  authenticate, authorizeRole("farmer"),farmerController.updateProfile);
+router.get("/sales",  authenticate, authorizeRole("farmer"),farmerController.getSellingRecords);
+router.get("/sales/finalized", authenticate, authorizeRole("farmer"), farmerController.getFinalizedRecords);
+router.get("/payment-dues", authenticate, authorizeRole("farmer"), farmerController.getPaymentDues);
+router.get("/transactions", authenticate, authorizeRole("farmer"), farmerController.getTransactions);
 
 module.exports = router;

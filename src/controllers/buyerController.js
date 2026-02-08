@@ -82,7 +82,7 @@ exports.loginBuyer = async (req, res) => {
 };
 
 exports.getProfile = async (req, res) => {
-  const { buyer_id } = req.query;
+  const buyer_id = req.user.user_id;
   try {
     const data = await Buyer.findBuyerById(buyer_id);
     res
@@ -150,7 +150,7 @@ exports.findFarmers = async (req, res) => {
 
 exports.getRecentFarmers = async (req, res) => {
   try {
-    const { buyer_id } = req.query; // 🔐 take from token, not query
+    const buyer_id = req.user.user_id;
 
     const recentFarmers = await ProcurementRequest.aggregate([
       {
@@ -210,7 +210,7 @@ exports.getRecentFarmers = async (req, res) => {
 };
 
 exports.getProcurementRequests = async (req, res) => {
-  const { buyer_id } = req.query;
+  const buyer_id = req.user.user_id;
   try {
     const pendingRequests = await ProcurementRequest.aggregate([
       {
@@ -273,7 +273,7 @@ exports.getProcurementRequests = async (req, res) => {
 };
 
 exports.getProcurements = async (req, res) => {
-  const { buyer_id } = req.query;
+  const buyer_id = req.user.user_id;
   try {
     const finalizedProcurements = await Procurement.aggregate([
       {
@@ -332,7 +332,8 @@ exports.getProcurements = async (req, res) => {
 };
 
 exports.getPaymentDues = async (req, res) => {
-  const { buyer_id } = req.query;
+  const buyer_id = req.user.user_id;
+  console.log({ buyer_id });
   try {
     const paymentDues = await PaymentDue.aggregate([
       // 1. Filter (WHERE)
@@ -381,7 +382,7 @@ exports.getPaymentDues = async (req, res) => {
 };
 
 exports.getTransactions = async (req, res) => {
-  const { buyer_id } = req.query;
+  const buyer_id = req.user.user_id;
   try {
     const buyerTransactions = await Transaction.aggregate([
       {

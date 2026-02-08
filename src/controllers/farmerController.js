@@ -83,7 +83,7 @@ exports.loginFarmer = async (req, res) => {
 };
 
 exports.getProfile = async (req, res) => {
-  const { farmer_id } = req.query;
+  const farmer_id = req.user.user_id;
   try {
     const data = await Farmer.getProfile(farmer_id);
     res
@@ -99,7 +99,7 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   const data = req.body;
-  const { farmer_id } = req.body;
+  const farmer_id = req.user.user_id;
   try {
     const result = await Farmer.updateProfile(farmer_id, data);
     res
@@ -115,7 +115,7 @@ exports.updateProfile = async (req, res) => {
 
 //  Sales
 exports.getSellingRecords = async (req, res) => {
-  const { farmer_id } = req.query;
+  const farmer_id = req.user.user_id;
   try {
     const pendingRequests = await ProcurementRequest.aggregate([
       {
@@ -172,7 +172,7 @@ exports.getSellingRecords = async (req, res) => {
   }
 };
 exports.getFinalizedRecords = async (req, res) => {
-  const { farmer_id } = req.query;
+  const farmer_id = req.user.user_id;
   try {
     const finalizedSales = await Procurement.aggregate([
       // 1. Filter (WHERE)
@@ -246,7 +246,7 @@ exports.getFinalizedRecords = async (req, res) => {
 
 //  Payments
 exports.getPaymentDues = async (req, res) => {
-  const { farmer_id } = req.query;
+  const farmer_id = req.user.user_id;
   try {
     const paymentDues = await PaymentDue.aggregate([
       // 1. Filter (WHERE)
@@ -304,7 +304,7 @@ exports.getPaymentDues = async (req, res) => {
 };
 
 exports.getTransactions = async (req, res) => {
-  const { farmer_id } = req.query;
+  const farmer_id = req.user.user_id;
   try {
     const farmerTransactions = await Transaction.aggregate([
       {

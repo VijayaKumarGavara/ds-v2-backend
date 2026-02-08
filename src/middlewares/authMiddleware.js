@@ -3,7 +3,6 @@ const { verifyToken } = require("../utils/jwt");
 const authenticate = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-
     if (!authHeader) {
       return res.status(401).send({
         success: false,

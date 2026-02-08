@@ -1,5 +1,5 @@
 const express = require("express");
-const cors=require("cors");
+const cors = require("cors");
 const { ConnectDB } = require("./config/database");
 
 const farmerRoutes = require("./routes/farmerRoutes");
@@ -9,6 +9,7 @@ const procurementRequestRoutes = require("./routes/procurementReuqestRoutes");
 const procurementRoutes = require("./routes/procurementRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const authRoutes = require("./routes/authRoutes");
+
 
 
 const app = express();
