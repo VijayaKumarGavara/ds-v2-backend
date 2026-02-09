@@ -1,3 +1,5 @@
+const cloudinary = require("../config/cloudinary");
+const path = require("path");
 const Farmer = require("../models/farmer");
 const { ProcurementRequest } = require("../models/procurement_request");
 const { Procurement } = require("../models/procurement");
@@ -7,14 +9,31 @@ const { generateId } = require("../utils/generateId");
 const { getHashedPassword } = require("../utils/getHashedPassword");
 const { comparePassword } = require("../utils/comparePassword");
 const { generateToken } = require("../utils/jwt");
+
 exports.registerFarmer = async (req, res) => {
   try {
     const { farmer_password } = req.body;
+
+    const tempFile = req.file;
+    const farmer_id = generateId("F");
+    const extension = path.extname(tempFile.originalname).toLowerCase();
+    const fileName = `${farmer_id}${extension}`;
+
+    const cloudinaryRes = await cloudinary.uploader.upload(tempFile.path, {
+      public_id: `${farmer_id}`,
+      folder: "farmers",
+      overwrite: true,
+      resource_type: "image",
+    });
+    const fs = require("fs");
+    fs.unlinkSync(tempFile.path);
+
     const hashedPassword = await getHashedPassword(farmer_password);
     const farmerInfo = {
       ...req.body,
-      farmer_id: generateId("F"),
+      farmer_id,
       farmer_password: hashedPassword,
+      farmer_image_path: fileName,
     };
     const result = await Farmer.registerFarmer(farmerInfo);
     const safeFarmer = {
@@ -22,10 +41,20 @@ exports.registerFarmer = async (req, res) => {
       farmer_name: result.farmer_name,
       farmer_village: result.farmer_village,
       farmer_mobile: result.farmer_mobile,
+      farmer_image_path: result.farmer_image_path,
     };
-    res
-      .status(200)
-      .send({ data: safeFarmer, message: "Farmer Registered Successfully." });
+    const token = generateToken({
+      user_id: safeFarmer.farmer_id,
+      role: "farmer",
+    });
+
+    res.status(200).send({
+      success: true,
+      data: safeFarmer,
+      token,
+      role: "farmer",
+      message: "Farmer Registered Successfully.",
+    });
   } catch (error) {
     res.status(400).send({
       message: "Something went wrong while registering the farmer.",
@@ -56,7 +85,7 @@ exports.loginFarmer = async (req, res) => {
           "Invalid login credentials. Please check your mobile number and password",
       });
     }
-    const { farmer_id, farmer_name, farmer_village } = farmerResults;
+    const { farmer_id, farmer_name, farmer_village,farmer_image_path } = farmerResults;
     const token = generateToken({
       user_id: farmer_id,
       role: "farmer",
@@ -69,6 +98,7 @@ exports.loginFarmer = async (req, res) => {
         farmer_name,
         farmer_mobile: farmerResults[0]?.farmer_mobile,
         farmer_village,
+        farmer_image_path,
       },
       token,
       role: "farmer",

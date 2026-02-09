@@ -9,12 +9,10 @@ const authenticate = (req, res, next) => {
         message: "Authorization header missing",
       });
     }
-
     const token = authHeader.split(" ")[1]; // Bearer <token>
 
     const decoded = verifyToken(token);
     // decoded = { user_id, role, iat, exp }
-
     req.user = decoded;
     next();
   } catch (error) {

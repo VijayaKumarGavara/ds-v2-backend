@@ -11,9 +11,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const authRoutes = require("./routes/authRoutes");
 
 
-
 const app = express();
-
 app.use(express.json());
 app.use(cors());
 
@@ -24,6 +22,7 @@ app.use("/api/crop", cropRoutes);
 app.use("/api/procurement-request", procurementRequestRoutes);
 app.use("/api/procurement", procurementRoutes);
 app.use("/api/payment", paymentRoutes);
+
 ConnectDB()
   .then(() => {
     console.log("Database connected successfully.");

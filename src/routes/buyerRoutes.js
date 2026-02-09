@@ -3,10 +3,11 @@ const buyerController = require("../controllers/buyerController");
 
 const authenticate = require("../middlewares/authMiddleware");
 const authorizeRole = require("../middlewares/authorizeRole");
+const upload=require("../middlewares/uploadBuyer");
 
 const router = express.Router();
 
-router.post("/register", buyerController.registerBuyer);
+router.post("/register",upload.single("buyer_photo"), buyerController.registerBuyer);
 router.post("/login", buyerController.loginBuyer);
 router.get("/profile", authenticate, authorizeRole("buyer"),buyerController.getProfile);
 router.patch("/update", authenticate, authorizeRole("buyer"),buyerController.updateBuyer);

@@ -1,3 +1,6 @@
+const cloudinary = require("../config/cloudinary");
+const path = require("path");
+
 const Buyer = require("../models/buyer");
 const { ProcurementRequest } = require("../models/procurement_request");
 const { Procurement } = require("../models/procurement");
@@ -12,16 +15,47 @@ const { generateToken } = require("../utils/jwt");
 exports.registerBuyer = async (req, res) => {
   try {
     const data = req.body;
+    const tempFile = req.file;
     const hashedPassword = await getHashedPassword(data.buyer_password);
     data.buyer_password = hashedPassword;
     data.buyer_id = generateId("B");
+
+    const extension = path.extname(tempFile.originalname).toLowerCase();
+    const fileName = `${data.buyer_id}${extension}`;
+
+    const cloudinaryRes = await cloudinary.uploader.upload(tempFile.path, {
+      public_id: `${data.buyer_id}`,
+      folder: "buyers",
+      overwrite: true,
+      resource_type: "image",
+    });
+    const fs = require("fs");
+    fs.unlinkSync(tempFile.path);
+
+    data.buyer_image_path = fileName;
+
     const result = await Buyer.registerBuyer(data);
-    const { buyer_name, buyer_id, buyer_mobile, buyer_village } = result;
-    const token = generateToken({ buyer_id, buyer_mobile });
+    const {
+      buyer_name,
+      buyer_id,
+      buyer_mobile,
+      buyer_village,
+      buyer_image_path,
+    } = result;
+    const token = generateToken({
+      user_id: buyer_id,
+      role: "buyer",
+    });
     res.status(200).send({
       success: true,
       message: "Buyer Registered Successfully.",
-      data: { buyer_name, buyer_id, buyer_mobile, buyer_village },
+      data: {
+        buyer_name,
+        buyer_id,
+        buyer_mobile,
+        buyer_village,
+        buyer_image_path,
+      },
       token,
       role: "buyer",
     });
@@ -55,7 +89,7 @@ exports.loginBuyer = async (req, res) => {
           "Invalid login credentials. Please check your mobile number and password",
       });
     }
-    const { buyer_id, buyer_name, buyer_village } = buyerResults;
+    const { buyer_id, buyer_name, buyer_village, buyer_image_path } = buyerResults;
     const token = generateToken({
       user_id: buyer_id,
       role: "buyer",
@@ -68,6 +102,7 @@ exports.loginBuyer = async (req, res) => {
         buyer_name,
         buyer_mobile: buyerResults?.buyer_mobile,
         buyer_village,
+        buyer_image_path
       },
       token,
       role: "buyer",
@@ -84,7 +119,7 @@ exports.loginBuyer = async (req, res) => {
 exports.getProfile = async (req, res) => {
   const buyer_id = req.user.user_id;
   try {
-    const data = await Buyer.findBuyerById(buyer_id);
+    const data = await Buyer.getProfile(buyer_id);
     res
       .status(200)
       .send({ data: data, message: "Buyers Data fetched successfully." });
@@ -123,7 +158,6 @@ exports.findFarmers = async (req, res) => {
     farmer_mobile: farmer_mobile?.trim(),
     farmer_id: farmer_id?.trim(),
   };
-
   try {
     const farmerResults = await Farmer.findFarmers(filters);
     if (farmerResults.length === 0) {
@@ -186,6 +220,7 @@ exports.getRecentFarmers = async (req, res) => {
           farmer_name: "$farmer.farmer_name",
           farmer_mobile: "$farmer.farmer_mobile",
           farmer_village: "$farmer.farmer_village",
+          farmer_image_path: "$farmer.farmer_image_path",
           lastPurchaseAt: 1,
         },
       },
@@ -249,6 +284,7 @@ exports.getProcurementRequests = async (req, res) => {
           createdAt: 1,
 
           farmer_name: "$farmer.farmer_name",
+          farmer_image_path: "$farmer.farmer_image_path",
           crop_name: "$crop.crop_name",
           crop_units: "$crop.crop_units",
         },
@@ -309,6 +345,7 @@ exports.getProcurements = async (req, res) => {
           quantity: 1,
           createdAt: 1,
           farmer_name: "$farmer.farmer_name",
+          farmer_image_path: "$farmer.farmer_image_path",
           crop_name: "$crop.crop_name",
           crop_units: "$crop.crop_units",
           cost_per_unit: 1,
@@ -333,7 +370,6 @@ exports.getProcurements = async (req, res) => {
 
 exports.getPaymentDues = async (req, res) => {
   const buyer_id = req.user.user_id;
-  console.log({ buyer_id });
   try {
     const paymentDues = await PaymentDue.aggregate([
       // 1. Filter (WHERE)
@@ -361,6 +397,7 @@ exports.getPaymentDues = async (req, res) => {
           due_id: 1,
           farmer_id: "$farmer.farmer_id",
           farmer_name: "$farmer.farmer_name",
+          farmer_image_path: "$farmer.farmer_image_path",
           total_procurement_amount: 1,
           total_paid_amount: 1,
           balance_amount: 1,
