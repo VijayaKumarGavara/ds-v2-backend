@@ -1,5 +1,6 @@
 const ProcurementRequest = require("../models/procurement_request");
 const { generateId } = require("../utils/generateId");
+const getAgriYear = require("../utils/getAgriYear");
 
 exports.createProcurmentRequest = async (req, res) => {
   
@@ -8,6 +9,7 @@ exports.createProcurmentRequest = async (req, res) => {
       ...req.body,
       request_id: generateId("PR"),
       status: "pending",
+      agri_year:getAgriYear(),
     };
     const result = await ProcurementRequest.createProcurementRequest(
       procurementRequestInfo,

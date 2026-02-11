@@ -16,6 +16,16 @@ exports.registerBuyer = async (req, res) => {
   try {
     const data = req.body;
     const tempFile = req.file;
+
+    const existedBuyer=await Buyer.findBuyerByMobile(data.buyer_mobile);
+    if(existedBuyer){
+      return res.status(400).send({
+        success:false,
+        message: "Buyer Already existed with this mobile number",
+        error:"Mobile number already existed"
+      });
+    }
+    
     const hashedPassword = await getHashedPassword(data.buyer_password);
     data.buyer_password = hashedPassword;
     data.buyer_id = generateId("B");

@@ -57,6 +57,11 @@ const procurementSchema = new Schema(
       enum: ["finalized", "cancelled"],
       default: "finalized",
     },
+
+    agri_year: {
+      type: String,
+      index: true,
+    },
   },
   {
     timestamps: {

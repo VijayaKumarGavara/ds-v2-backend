@@ -44,6 +44,12 @@ const procurementRequestSchema = new Schema(
       default: "pending",
       index: true,
     },
+
+    agri_year: {
+      type: String,
+      index: true,
+    },
+
   },
   {
     timestamps: true,

@@ -3,6 +3,7 @@ const Procurement = require("../models/procurement");
 const ProcurementRequest = require("../models/procurement_request");
 const PaymentDue = require("../models/payment_dues");
 const { generateId } = require("../utils/generateId");
+const getAgriYear = require("../utils/getAgriYear");
 
 exports.createProcurement = async (req, res) => {
   const session = await mongoose.startSession();
@@ -15,7 +16,7 @@ exports.createProcurement = async (req, res) => {
       { status: "finalized" },
       { new: true, session },
     );
-    const { farmer_id, buyer_id, crop_id, quantity, request_id } = request;
+    const { farmer_id, buyer_id, crop_id, quantity, request_id, agri_year } = request;
     if (!request) {
       throw new Error("Invalid or already finalized request");
     }
@@ -29,6 +30,7 @@ exports.createProcurement = async (req, res) => {
       quantity,
       cost_per_unit: requestInfo.cost_per_unit,
       total_amount,
+      agri_year,
     };
     const procurement = await Procurement.createProcurement(procuremetInput, {
       session: session,
@@ -89,7 +91,7 @@ exports.createFinalizedProcurement = async (req, res) => {
     if (!farmer_id || !buyer_id || !crop_id || !quantity || !cost_per_unit) {
       throw new Error("Missing required fields");
     }
-
+    const agri_year = getAgriYear();
     const requestPayload = {
       request_id: generateId("PR"),
       farmer_id,
@@ -98,6 +100,7 @@ exports.createFinalizedProcurement = async (req, res) => {
       crop_units,
       quantity,
       status: "finalized",
+      agri_year,
     };
 
     const request =
@@ -117,6 +120,7 @@ exports.createFinalizedProcurement = async (req, res) => {
       quantity,
       cost_per_unit,
       total_amount,
+      agri_year,
     };
 
     const procurement =

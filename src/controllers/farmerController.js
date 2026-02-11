@@ -12,8 +12,16 @@ const { generateToken } = require("../utils/jwt");
 
 exports.registerFarmer = async (req, res) => {
   try {
-    const { farmer_password } = req.body;
+    const { farmer_password, farmer_mobile } = req.body;
+    const existedFarmer=await Farmer.findFarmerByMobile(farmer_mobile);
 
+    if(existedFarmer){
+      return res.status(400).send({
+        success:false,
+        message: "Farmer Already existed with this mobile number",
+        error:"Mobile number already existed"
+      });
+    }
     const tempFile = req.file;
     const farmer_id = generateId("F");
     const extension = path.extname(tempFile.originalname).toLowerCase();
