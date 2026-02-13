@@ -9,17 +9,18 @@ const { generateId } = require("../utils/generateId");
 const { getHashedPassword } = require("../utils/getHashedPassword");
 const { comparePassword } = require("../utils/comparePassword");
 const { generateToken } = require("../utils/jwt");
+const getAgriYear = require("../utils/getAgriYear");
 
 exports.registerFarmer = async (req, res) => {
   try {
     const { farmer_password, farmer_mobile } = req.body;
-    const existedFarmer=await Farmer.findFarmerByMobile(farmer_mobile);
+    const existedFarmer = await Farmer.findFarmerByMobile(farmer_mobile);
 
-    if(existedFarmer){
+    if (existedFarmer) {
       return res.status(400).send({
-        success:false,
+        success: false,
         message: "Farmer Already existed with this mobile number",
-        error:"Mobile number already existed"
+        error: "Mobile number already existed",
       });
     }
     const tempFile = req.file;
@@ -93,7 +94,8 @@ exports.loginFarmer = async (req, res) => {
           "Invalid login credentials. Please check your mobile number and password",
       });
     }
-    const { farmer_id, farmer_name, farmer_village,farmer_image_path } = farmerResults;
+    const { farmer_id, farmer_name, farmer_village, farmer_image_path } =
+      farmerResults;
     const token = generateToken({
       user_id: farmer_id,
       role: "farmer",
@@ -154,13 +156,17 @@ exports.updateProfile = async (req, res) => {
 //  Sales
 exports.getSellingRecords = async (req, res) => {
   const farmer_id = req.user.user_id;
+  const matchStage = {
+    farmer_id: farmer_id,
+    status: "pending",
+  };
+
+  
+
   try {
     const pendingRequests = await ProcurementRequest.aggregate([
       {
-        $match: {
-          farmer_id: farmer_id,
-          status: "pending",
-        },
+        $match: matchStage,
       },
 
       {
@@ -186,6 +192,7 @@ exports.getSellingRecords = async (req, res) => {
       {
         $project: {
           _id: 0,
+          crop_id:"$crop.crop_id",
           buyer_name: "$buyer.buyer_name",
           crop_name: "$crop.crop_name",
           crop_units: "$crop.crop_units",
@@ -211,13 +218,22 @@ exports.getSellingRecords = async (req, res) => {
 };
 exports.getFinalizedRecords = async (req, res) => {
   const farmer_id = req.user.user_id;
+  const agri_year = req.query.agri_year;
+  const matchStage = {
+    farmer_id: farmer_id,
+    status: "finalized",
+  };
+
+  
+  if (agri_year) {
+    matchStage.agri_year = agri_year;
+  }
+
   try {
     const finalizedSales = await Procurement.aggregate([
       // 1. Filter (WHERE)
       {
-        $match: {
-          farmer_id: farmer_id,
-        },
+        $match: matchStage,
       },
 
       // 2. JOIN buyers
@@ -257,6 +273,7 @@ exports.getFinalizedRecords = async (req, res) => {
       {
         $project: {
           _id: 0,
+          crop_id:"$crop.crop_id",
           farmer_name: "$farmer.farmer_name",
           buyer_name: "$buyer.buyer_name",
           crop_name: "$crop.crop_name",

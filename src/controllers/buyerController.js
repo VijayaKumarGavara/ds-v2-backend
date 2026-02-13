@@ -56,7 +56,7 @@ exports.registerBuyer = async (req, res) => {
       user_id: buyer_id,
       role: "buyer",
     });
-    res.status(200).send({
+    return res.status(200).send({
       success: true,
       message: "Buyer Registered Successfully.",
       data: {
@@ -70,7 +70,7 @@ exports.registerBuyer = async (req, res) => {
       role: "buyer",
     });
   } catch (error) {
-    res.status(400).send({
+    return res.status(400).send({
       message: "Something went wrong while registering new buyer.",
       error: error.message,
     });
@@ -82,7 +82,7 @@ exports.loginBuyer = async (req, res) => {
   try {
     const buyerResults = await Buyer.findBuyerByMobile(buyer_mobile);
     if (!buyerResults) {
-      res.status(401).send({
+      return res.status(401).send({
         success: false,
         message:
           "Invalid login credentials. Please check your mobile number and password",
@@ -93,7 +93,7 @@ exports.loginBuyer = async (req, res) => {
       buyerResults?.buyer_password,
     );
     if (!isMatch) {
-      res.status(401).send({
+      return res.status(401).send({
         success: false,
         message:
           "Invalid login credentials. Please check your mobile number and password",
@@ -104,7 +104,7 @@ exports.loginBuyer = async (req, res) => {
       user_id: buyer_id,
       role: "buyer",
     });
-    res.status(200).send({
+    return res.status(200).send({
       success: true,
       message: "Logged in Successfully.",
       data: {
@@ -118,7 +118,7 @@ exports.loginBuyer = async (req, res) => {
       role: "buyer",
     });
   } catch (error) {
-    res.status(400).send({
+    return res.status(400).send({
       success: false,
       message: "Something went wrong while logging in.",
       error: error.message,
@@ -130,11 +130,11 @@ exports.getProfile = async (req, res) => {
   const buyer_id = req.user.user_id;
   try {
     const data = await Buyer.getProfile(buyer_id);
-    res
+    return res
       .status(200)
       .send({ data: data, message: "Buyers Data fetched successfully." });
   } catch (error) {
-    res.status(400).send({
+    return res.status(400).send({
       message: "Something went wrong while fetching the buyers.",
       error: error.message,
     });
@@ -146,13 +146,13 @@ exports.updateBuyer = async (req, res) => {
   const { buyer_id } = req.body;
   try {
     const result = await Buyer.updateBuyer(buyer_id, data);
-    res.status(201).send({
+    return res.status(201).send({
       data: result,
       success: true,
       message: "Buyer Data Updated Successfully.",
     });
   } catch (error) {
-    res.status(400).send({
+    return res.status(400).send({
       message: "Something went wrong while updating the buyer.",
       error: error.message,
     });
@@ -171,20 +171,20 @@ exports.findFarmers = async (req, res) => {
   try {
     const farmerResults = await Farmer.findFarmers(filters);
     if (farmerResults.length === 0) {
-      res.status(200).send({
+      return res.status(200).send({
         success: true,
         message: "No matching results found.",
         data: farmerResults,
       });
     } else {
-      res.status(200).send({
+      return res.status(200).send({
         success: true,
         data: farmerResults,
         message: "Successfully found the farmer.",
       });
     }
   } catch (error) {
-    res.status(400).send({
+    return res.status(400).send({
       success: false,
       error: error.message,
       message: "Error while finding the famrers",
@@ -240,13 +240,13 @@ exports.getRecentFarmers = async (req, res) => {
       },
     ]);
 
-    res.status(200).send({
+    return res.status(200).send({
       success: true,
       data: recentFarmers,
       message: "Successfully fetched recent farmers",
     });
   } catch (error) {
-    res.status(400).send({
+    return res.status(400).send({
       success: false,
       error: error.message,
       message: "Failed to fetch recent farmers",
@@ -304,13 +304,13 @@ exports.getProcurementRequests = async (req, res) => {
       },
     ]);
 
-    res.status(200).send({
+    return res.status(200).send({
       success: true,
       data: pendingRequests,
       message: "Successfully fetched the procurement requests.",
     });
   } catch (error) {
-    res.status(400).send({
+    return res.status(400).send({
       success: false,
       errror: error.message,
       message: "Failed to fetch the procurement requests.",
@@ -414,13 +414,13 @@ exports.getPaymentDues = async (req, res) => {
         },
       },
     ]);
-    res.status(200).send({
+    return res.status(200).send({
       success: true,
       data: paymentDues,
       message: "Successfully fetched the procurement.",
     });
   } catch (error) {
-    res.status(400).send({
+    return res.status(400).send({
       success: false,
       errror: error.message,
       message: "Failed to fetch the finalized procurements.",
@@ -461,13 +461,13 @@ exports.getTransactions = async (req, res) => {
       },
     ]);
 
-    res.status(200).send({
+    return res.status(200).send({
       success: true,
       data: buyerTransactions,
       message: "Buyer Transactions fetched successfully.",
     });
   } catch (error) {
-    res.status(400).send({
+    return res.status(400).send({
       success: false,
       error: error.message,
       message: "Failed to fetch the buyer transactions.",
