@@ -201,6 +201,9 @@ exports.getSellingRecords = async (req, res) => {
           createdAt: 1,
         },
       },
+      {
+        $sort: { createdAt: -1 },
+      },
     ]);
 
     res.status(200).send({
@@ -283,6 +286,9 @@ exports.getFinalizedRecords = async (req, res) => {
           total_amount: 1,
           finalizedAt: 1,
         },
+      },
+      {
+        $sort: { finalizedAt: -1 },
       },
     ]);
     res.status(200).send({
@@ -383,6 +389,9 @@ exports.getTransactions = async (req, res) => {
           balance_after: 1,
           createdAt: 1,
         },
+      },
+      {
+        $sort: { createdAt: -1 },
       },
     ]);
     res.status(200).send({

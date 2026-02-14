@@ -17,15 +17,15 @@ exports.registerBuyer = async (req, res) => {
     const data = req.body;
     const tempFile = req.file;
 
-    const existedBuyer=await Buyer.findBuyerByMobile(data.buyer_mobile);
-    if(existedBuyer){
+    const existedBuyer = await Buyer.findBuyerByMobile(data.buyer_mobile);
+    if (existedBuyer) {
       return res.status(400).send({
-        success:false,
+        success: false,
         message: "Buyer Already existed with this mobile number",
-        error:"Mobile number already existed"
+        error: "Mobile number already existed",
       });
     }
-    
+
     const hashedPassword = await getHashedPassword(data.buyer_password);
     data.buyer_password = hashedPassword;
     data.buyer_id = generateId("B");
@@ -99,7 +99,8 @@ exports.loginBuyer = async (req, res) => {
           "Invalid login credentials. Please check your mobile number and password",
       });
     }
-    const { buyer_id, buyer_name, buyer_village, buyer_image_path } = buyerResults;
+    const { buyer_id, buyer_name, buyer_village, buyer_image_path } =
+      buyerResults;
     const token = generateToken({
       user_id: buyer_id,
       role: "buyer",
@@ -112,7 +113,7 @@ exports.loginBuyer = async (req, res) => {
         buyer_name,
         buyer_mobile: buyerResults?.buyer_mobile,
         buyer_village,
-        buyer_image_path
+        buyer_image_path,
       },
       token,
       role: "buyer",
@@ -297,6 +298,7 @@ exports.getProcurementRequests = async (req, res) => {
           farmer_image_path: "$farmer.farmer_image_path",
           crop_name: "$crop.crop_name",
           crop_units: "$crop.crop_units",
+          crop_id: "$crop.crop_id",
         },
       },
       {
@@ -320,12 +322,18 @@ exports.getProcurementRequests = async (req, res) => {
 
 exports.getProcurements = async (req, res) => {
   const buyer_id = req.user.user_id;
+  const agri_year = req.query.agri_year;
+  const matchStage = {
+    buyer_id: buyer_id,
+    status: "finalized",
+  };
+  if (agri_year) {
+    matchStage.agri_year = agri_year;
+  }
   try {
     const finalizedProcurements = await Procurement.aggregate([
       {
-        $match: {
-          buyer_id: buyer_id,
-        },
+        $match: matchStage,
       },
 
       {
@@ -353,14 +361,18 @@ exports.getProcurements = async (req, res) => {
           procurement_id: 1,
           request_id: 1,
           quantity: 1,
-          createdAt: 1,
+          finalizedAt: 1,
           farmer_name: "$farmer.farmer_name",
           farmer_image_path: "$farmer.farmer_image_path",
+          crop_id:"$crop.crop_id",
           crop_name: "$crop.crop_name",
           crop_units: "$crop.crop_units",
           cost_per_unit: 1,
           total_amount: 1,
         },
+      },
+      {
+        $sort: { finalizedAt: -1 },
       },
     ]);
 
