@@ -6,7 +6,7 @@ const local_db_url=process.env.LOCAL_MONGO_DB_URL;
 
 async function ConnectDB() {
   try {
-    await mongoose.connect(db_url);
+    await mongoose.connect(local_db_url);
   } catch (error) {
     console.log("Error while connecting Database,", error);
   }
