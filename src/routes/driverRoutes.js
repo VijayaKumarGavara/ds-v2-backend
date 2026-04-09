@@ -11,7 +11,8 @@ router.patch("/update", driverController.updateProfile);
 router.get("/profile", driverController.getProfile);
 
 router.post("/find-farmers", driverController.findFarmers);
-router.get("/recent-farmers", driverController.getRecentFarmers)
+router.get("/recent-farmers", driverController.getRecentFarmers);
+router.get("/work-records", driverController.getTractorWorks);
 
 
 module.exports=router;

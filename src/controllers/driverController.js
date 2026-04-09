@@ -248,3 +248,57 @@ exports.getRecentFarmers = async (req, res) => {
     });
   }
 };
+
+exports.getTractorWorks=async(req, res)=>{
+  const driver_id=req.query.driver_id;
+  try {
+    const tractorWorks = await TractorWork.aggregate([
+      {
+        $match: {
+          driver_id: driver_id,
+          status: "active",
+        },
+      },
+
+      {
+        $lookup: {
+          from: "farmers",
+          localField: "farmer_id",
+          foreignField: "farmer_id",
+          as: "farmer",
+        },
+      },
+      { $unwind: "$farmer" },
+      
+
+      {
+        $project: {
+          _id: 0,
+
+          work_id: 1,
+          quantity: 1,
+          createdAt: 1,
+          work:1, 
+          notes:1,
+          farmer_name: "$farmer.farmer_name",
+          farmer_image_path: "$farmer.farmer_image_path",
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    return res.status(200).send({
+      success: true,
+      data: tractorWorks,
+      message: "Successfully fetched the tractor works.",
+    });
+  } catch (error) {
+    return res.status(400).send({
+      success: false,
+      errror: error.message,
+      message: "Failed to fetch the tractor works.",
+    });
+  }
+}

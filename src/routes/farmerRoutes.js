@@ -15,4 +15,5 @@ router.get("/sales/finalized", authenticate, authorizeRole("farmer"), farmerCont
 router.get("/payment-dues", authenticate, authorizeRole("farmer"), farmerController.getPaymentDues);
 router.get("/transactions", authenticate, authorizeRole("farmer"), farmerController.getTransactions);
 
+router.get("/tractor-works", farmerController.getTractorWorks);
 module.exports = router;

@@ -1,10 +1,13 @@
 const cloudinary = require("../config/cloudinary");
 const path = require("path");
+
 const Farmer = require("../models/farmer");
 const { ProcurementRequest } = require("../models/procurement_request");
 const { Procurement } = require("../models/procurement");
 const { PaymentDue } = require("../models/payment_dues");
 const { Transaction } = require("../models/transaction");
+const {TractorWork}=require("../models/tractor_work");
+
 const { generateId } = require("../utils/generateId");
 const { getHashedPassword } = require("../utils/getHashedPassword");
 const { comparePassword } = require("../utils/comparePassword");
@@ -160,8 +163,6 @@ exports.getSellingRecords = async (req, res) => {
     farmer_id: farmer_id,
     status: "pending",
   };
-
-  
 
   try {
     const pendingRequests = await ProcurementRequest.aggregate([
@@ -407,3 +408,60 @@ exports.getTransactions = async (req, res) => {
     });
   }
 };
+
+
+// tractor works
+exports.getTractorWorks=async(req, res)=>{
+  const farmer_id = req.query.farmer_id;
+  const matchStage = {
+    farmer_id: farmer_id,
+    status: "active",
+  };
+
+  try {
+    const tractorWorks = await TractorWork.aggregate([
+      {
+        $match: matchStage,
+      },
+
+      {
+        $lookup: {
+          from: "drivers",
+          localField: "driver_id",
+          foreignField: "driver_id",
+          as: "driver",
+        },
+      },
+      { $unwind: "$driver" },
+
+      {
+        $project: {
+          _id: 0,
+          work_id:1,
+          driver_name: "$driver.driver_name",
+          driver_photo:"$driver.driver_photo",
+          work:1,
+          notes:1,
+          quantity: 1,
+          cost_per_unit:1,
+          createdAt: 1,
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    res.status(200).send({
+      success: true,
+      data: tractorWorks,
+      message: "Successfully fetched the tractor works.",
+    });
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      errror: error.message,
+      message: "Failed to fetch the tractor works.",
+    });
+  }
+}
