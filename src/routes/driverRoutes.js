@@ -10,4 +10,8 @@ router.post("/login", driverController.loginDriver);
 router.patch("/update", driverController.updateProfile);
 router.get("/profile", driverController.getProfile);
 
+router.post("/find-farmers", driverController.findFarmers);
+router.get("/recent-farmers", driverController.getRecentFarmers)
+
+
 module.exports=router;

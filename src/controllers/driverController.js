@@ -1,12 +1,16 @@
 const cloudinary = require("../config/cloudinary");
 const path = require("path");
+
 const Driver = require("../models/driver");
+const Farmer = require("../models/farmer");
+
 
 const { generateId } = require("../utils/generateId");
 const { getHashedPassword } = require("../utils/getHashedPassword");
 const { comparePassword } = require("../utils/comparePassword");
 const { generateToken } = require("../utils/jwt");
 const getAgriYear = require("../utils/getAgriYear");
+const { TractorWork } = require("../models/tractor_work");
 
 exports.registerDriver = async (req, res) => {
   try {
@@ -147,6 +151,100 @@ exports.getProfile = async (req, res) => {
     res.status(400).send({
       message: "Something went wrong while fetching the farmers.",
       error: error.message,
+    });
+  }
+};
+
+exports.findFarmers = async (req, res) => {
+  const { farmer_name, farmer_village, farmer_mobile, farmer_id } = req.body;
+
+  const filters = {
+    farmer_name: farmer_name?.trim(),
+    farmer_village: farmer_village?.trim(),
+    farmer_mobile: farmer_mobile?.trim(),
+    farmer_id: farmer_id?.trim(),
+  };
+  try {
+    const farmerResults = await Farmer.findFarmers(filters);
+    if (farmerResults.length === 0) {
+      return res.status(200).send({
+        success: true,
+        message: "No matching results found.",
+        data: farmerResults,
+      });
+    } else {
+      return res.status(200).send({
+        success: true,
+        data: farmerResults,
+        message: "Successfully found the farmer.",
+      });
+    }
+  } catch (error) {
+    return res.status(400).send({
+      success: false,
+      error: error.message,
+      message: "Error while finding the famrers",
+    });
+  }
+};
+
+exports.getRecentFarmers = async (req, res) => {
+  try {
+    const driver_id = req.query?.driver_id;
+    const recentFarmers = await TractorWork.aggregate([
+      {
+        $match: { driver_id },
+      },
+
+      {
+        $sort: { createdAt: -1 },
+      },
+
+      {
+        $group: {
+          _id: "$farmer_id",
+          lastPurchaseAt: { $first: "$createdAt" },
+        },
+      },
+
+      {
+        $lookup: {
+          from: "farmers",
+          localField: "_id",
+          foreignField: "farmer_id",
+          as: "farmer",
+        },
+      },
+
+      { $unwind: "$farmer" },
+
+      {
+        $project: {
+          _id: 0,
+          farmer_id: "$farmer.farmer_id",
+          farmer_name: "$farmer.farmer_name",
+          farmer_mobile: "$farmer.farmer_mobile",
+          farmer_village: "$farmer.farmer_village",
+          farmer_image_path: "$farmer.farmer_image_path",
+          work_date: 1,
+        },
+      },
+
+      {
+        $sort: { work_date: -1 },
+      },
+    ]);
+
+    return res.status(200).send({
+      success: true,
+      data: recentFarmers,
+      message: "Successfully fetched recent farmers",
+    });
+  } catch (error) {
+    return res.status(400).send({
+      success: false,
+      error: error.message,
+      message: "Failed to fetch recent farmers",
     });
   }
 };
