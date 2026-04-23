@@ -3,14 +3,15 @@ const path = require("path");
 
 const Driver = require("../models/driver");
 const Farmer = require("../models/farmer");
-
+const { TractorWork } = require("../models/tractor_work");
+const { TractorWorkPaymentDue } = require("../models/tractor_work_payment_due");
+const {TractorTransaction} =require("../models/tractor_transaction");
 
 const { generateId } = require("../utils/generateId");
 const { getHashedPassword } = require("../utils/getHashedPassword");
 const { comparePassword } = require("../utils/comparePassword");
 const { generateToken } = require("../utils/jwt");
 const getAgriYear = require("../utils/getAgriYear");
-const { TractorWork } = require("../models/tractor_work");
 
 exports.registerDriver = async (req, res) => {
   try {
@@ -58,7 +59,7 @@ exports.registerDriver = async (req, res) => {
       user_id: safeDriver.driver_id,
       role: "driver",
     });
-    
+
     res.status(200).send({
       success: true,
       data: safeDriver,
@@ -126,7 +127,7 @@ exports.loginDriver = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   const data = req.body;
-  const driver_id = req.body.driver_id;
+  const driver_id = req.user.user_id;
   try {
     const result = await Driver.updateProfile(driver_id, data);
     res
@@ -141,7 +142,7 @@ exports.updateProfile = async (req, res) => {
 };
 
 exports.getProfile = async (req, res) => {
-  const driver_id = req.query.driver_id;
+  const driver_id = req.user.user_id;
   try {
     const data = await Driver.getProfile(driver_id);
     res
@@ -190,7 +191,7 @@ exports.findFarmers = async (req, res) => {
 
 exports.getRecentFarmers = async (req, res) => {
   try {
-    const driver_id = req.query?.driver_id;
+    const driver_id = req.user.user_id;
     const recentFarmers = await TractorWork.aggregate([
       {
         $match: { driver_id },
@@ -249,14 +250,16 @@ exports.getRecentFarmers = async (req, res) => {
   }
 };
 
-exports.getTractorWorks=async(req, res)=>{
-  const driver_id=req.query.driver_id;
+exports.getTractorWorks = async (req, res) => {
+  const driver_id = req.user.user_id;
+  const agri_year=req.query.agri_year;
   try {
     const tractorWorks = await TractorWork.aggregate([
       {
         $match: {
-          driver_id: driver_id,
+          driver_id,
           status: "active",
+          agri_year
         },
       },
 
@@ -268,20 +271,118 @@ exports.getTractorWorks=async(req, res)=>{
           as: "farmer",
         },
       },
+
       { $unwind: "$farmer" },
-      
 
       {
         $project: {
           _id: 0,
-
           work_id: 1,
           quantity: 1,
+          cost_per_unit: 1,
+          total_amount: 1,
           createdAt: 1,
-          work:1, 
-          notes:1,
+          work_date: 1,
+          work: 1,
+          notes: 1,
+          farmer_name: "$farmer.farmer_name",
+          farmer_village:"$farmer.farmer_name",
+          farmer_mobile:"$farmer.farmer_mobile",
+          farmer_image_path: "$farmer.farmer_image_path",
+        },
+      },
+
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    res.status(200).send({
+      success: true,
+      data: tractorWorks,
+      message: "Successfully fetched the tractor works.",
+    });
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      error: error.message,
+      message: "Failed to fetch the tractor works.",
+    });
+  }
+};
+
+exports.getPaymentDues = async (req, res) => {
+  const driver_id = req.user.user_id;
+  const matchStage = req.query;
+  matchStage.driver_id = driver_id;
+  try {
+    const paymentDues = await TractorWorkPaymentDue.aggregate([
+      {
+        $match: matchStage,
+      },
+      {
+        $lookup: {
+          from: "farmers",
+          localField: "farmer_id",
+          foreignField: "farmer_id",
+          as: "farmer",
+        },
+      },
+      {
+        $unwind: "$farmer",
+      },
+      {
+        $project: {
+          due_id: 1,
+          farmer_id: "$farmer.farmer_id",
           farmer_name: "$farmer.farmer_name",
           farmer_image_path: "$farmer.farmer_image_path",
+          total_procurement_amount: 1,
+          total_paid_amount: 1,
+          balance_amount: 1,
+        },
+      },
+    ]);
+    return res.status(200). send({
+      success: true,
+      data: paymentDues,
+      message: "Successfully fetched the payment dues.",
+    })
+  } catch (error) {
+    return res.status(400).send({
+      success: false,
+      errror: error.message,
+      message: "Failed to fetch the payment dues.",
+    });
+  }
+};
+
+exports.getTransactions = async (req, res) => {
+  const driver_id = req.user.user_id;
+  try {
+    const driverTransactions = await TractorTransaction.aggregate([
+      {
+        $match: {
+          driver_id: driver_id,
+        },
+      },
+      {
+        $lookup: {
+          from: "farmers",
+          localField: "farmer_id",
+          foreignField: "farmer_id",
+          as: "farmer",
+        },
+      },
+      { $unwind: "$farmer" },
+      {
+        $project: {
+          _id: 1,
+          farmer_name: "$farmer.farmer_name",
+          amount: 1,
+          balance_before: 1,
+          balance_after: 1,
+          createdAt: 1,
         },
       },
       {
@@ -291,14 +392,14 @@ exports.getTractorWorks=async(req, res)=>{
 
     return res.status(200).send({
       success: true,
-      data: tractorWorks,
-      message: "Successfully fetched the tractor works.",
+      data: driverTransactions,
+      message: "Driver Transactions fetched successfully.",
     });
   } catch (error) {
     return res.status(400).send({
       success: false,
-      errror: error.message,
-      message: "Failed to fetch the tractor works.",
+      error: error.message,
+      message: "Failed to fetch the Driver transactions.",
     });
   }
-}
+};

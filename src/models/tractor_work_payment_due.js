@@ -47,12 +47,7 @@ const tractorWorkPaymentDueSchema = new Schema(
   },
 );
 
-const TractorWorkPaymentDue = model("TractorWorkPaymentDue", tractorWorkPaymentDueSchema);
-
-exports.createTractorWork = async (data, session) => {
-  const work = new TractorWork(data);
-  return work.save({ session });
-};
+const TractorWorkPaymentDue = model("Tractor-Work-PaymentDue", tractorWorkPaymentDueSchema);
 
 exports.existingDue = async (farmer_id, driver_id, session) => {
   return TractorWorkPaymentDue.findOne({
@@ -84,7 +79,7 @@ exports.updatePaymentDue = async (query, total_amount, due_id, session) => {
 };
 
 exports.findDue = async (farmer_id, driver_id, due_id, session) => {
-  return PaymentDue.findOne({
+  return TractorWorkPaymentDue.findOne({
     farmer_id,
     driver_id,
     due_id,
@@ -92,7 +87,7 @@ exports.findDue = async (farmer_id, driver_id, due_id, session) => {
 };
 
 exports.applyPayment = async (query, amount, session) => {
-  return PaymentDue.findOneAndUpdate(
+  return TractorWorkPaymentDue.findOneAndUpdate(
     query,
     {
       $inc: {
@@ -106,5 +101,22 @@ exports.applyPayment = async (query, amount, session) => {
     },
   );
 };
+
+exports.adjustDueByDiff = async (query, diff, session) => {
+  return TractorWorkPaymentDue.findOneAndUpdate(
+    query,
+    {
+      $inc: {
+        total_work_amount: diff,
+        balance_amount: diff,
+      },
+    },
+    {
+      new: true,
+      session,
+    }
+  );
+};
+
 
 exports.TractorWorkPaymentDue = TractorWorkPaymentDue;

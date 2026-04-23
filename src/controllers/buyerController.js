@@ -420,7 +420,7 @@ exports.getPaymentDues = async (req, res) => {
           farmer_id: "$farmer.farmer_id",
           farmer_name: "$farmer.farmer_name",
           farmer_image_path: "$farmer.farmer_image_path",
-          total_procurement_amount: 1,
+          total_work_amount: 1,
           total_paid_amount: 1,
           balance_amount: 1,
         },

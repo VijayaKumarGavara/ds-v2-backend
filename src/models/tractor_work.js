@@ -79,27 +79,57 @@ const tractorWorkSchema = new mongoose.Schema(
       type: String,
       index: true,
     },
-
   },
   {
     timestamps: true,
   },
 );
 
-const TractorWork=mongoose.model("Tractor_Work", tractorWorkSchema);
-exports.createTractorWork=async(data, session)=>{
-    const tractorWork=new TractorWork(data);
-    const result = await tractorWork.save({session});
-    return result;
-}
+const TractorWork = mongoose.model("Tractor_Work", tractorWorkSchema);
+exports.createTractorWork = async (data, session) => {
+  const tractorWork = new TractorWork(data);
+  const result = await tractorWork.save({ session });
+  return result;
+};
 
-exports.updateTractorWork=async (query, data, options = {}) => {
+exports.updateTractorWork = async (query, data, options = {}) => {
   return TractorWork.findOneAndUpdate(query, data, {
     returnDocument: "after",
     ...options,
   });
-}; 
+};
 
+exports.existingWork = async (work_id, session) => {
+  return TractorWork.findOne({
+    work_id,
+  }).session(session);
+};
 
+exports.deleteOrCancelWork = async (
+  work_id,
+  hasPayment,
+  session
+) => {
+  if (!hasPayment) {
+    // HARD DELETE
+    return TractorWork.deleteOne(
+      { work_id },
+      { session }
+    );
+  }
 
-exports.TractorWork=TractorWork;
+  // SOFT DELETE (cancel)
+  return TractorWork.findOneAndUpdate(
+    { work_id },
+    {
+      status: "cancelled",
+      is_modified: true,
+    },
+    {
+      new: true,
+      session,
+    }
+  );
+};
+
+exports.TractorWork = TractorWork;

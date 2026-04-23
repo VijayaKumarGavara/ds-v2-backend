@@ -12,6 +12,7 @@ const authRoutes = require("./routes/authRoutes");
 
 const driverRoutes=require("./routes/driverRoutes");
 const tractorWorkRoutes=require("./routes/tractorWorkRoutes");
+const tractorWorkPaymentRoutes=require("./routes/tractorWorkPaymentRoutes");
 
 const app = express();
 app.use(express.json());
@@ -27,6 +28,7 @@ app.use("/api/payment", paymentRoutes);
 
 app.use("/api/driver", driverRoutes);
 app.use("/api/tractor-work", tractorWorkRoutes);
+app.use("/api/tractor-work-payment", tractorWorkPaymentRoutes);
 
 ConnectDB()
   .then(() => {
