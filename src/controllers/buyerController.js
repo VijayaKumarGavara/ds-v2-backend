@@ -1,5 +1,6 @@
 const cloudinary = require("../config/cloudinary");
 const path = require("path");
+const streamifier = require("streamifier");
 
 const Buyer = require("../models/buyer");
 const { ProcurementRequest } = require("../models/procurement_request");
@@ -12,10 +13,12 @@ const { comparePassword } = require("../utils/comparePassword");
 const { getHashedPassword } = require("../utils/getHashedPassword");
 const { generateId } = require("../utils/generateId");
 const { generateToken } = require("../utils/jwt");
+
+
+
 exports.registerBuyer = async (req, res) => {
   try {
     const data = req.body;
-    const tempFile = req.file;
 
     const existedBuyer = await Buyer.findBuyerByMobile(data.buyer_mobile);
     if (existedBuyer) {
@@ -26,36 +29,55 @@ exports.registerBuyer = async (req, res) => {
       });
     }
 
+    const file = req.file;
+    const buyer_id = generateId("B");
+
+    let fileName = null;
+
+    if (file) {
+      const extension = path.extname(file.originalname).toLowerCase();
+      fileName = `${buyer_id}${extension}`;
+
+      await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            public_id: `buyers/${buyer_id}`,
+            resource_type: "image",
+            overwrite: true,
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        streamifier.createReadStream(file.buffer).pipe(stream);
+      });
+    }
+
     const hashedPassword = await getHashedPassword(data.buyer_password);
-    data.buyer_password = hashedPassword;
-    data.buyer_id = generateId("B");
 
-    const extension = path.extname(tempFile.originalname).toLowerCase();
-    const fileName = `${data.buyer_id}${extension}`;
+    const buyerInfo = {
+      ...data,
+      buyer_id,
+      buyer_password: hashedPassword,
+      buyer_image_path: fileName,
+    };
 
-    const cloudinaryRes = await cloudinary.uploader.upload(tempFile.path, {
-      public_id: `${data.buyer_id}`,
-      folder: "buyers",
-      overwrite: true,
-      resource_type: "image",
-    });
-    const fs = require("fs");
-    fs.unlinkSync(tempFile.path);
+    const result = await Buyer.registerBuyer(buyerInfo);
 
-    data.buyer_image_path = fileName;
-
-    const result = await Buyer.registerBuyer(data);
     const {
       buyer_name,
-      buyer_id,
       buyer_mobile,
       buyer_village,
       buyer_image_path,
     } = result;
+
     const token = generateToken({
       user_id: buyer_id,
       role: "buyer",
     });
+
     return res.status(200).send({
       success: true,
       message: "Buyer Registered Successfully.",
@@ -69,6 +91,7 @@ exports.registerBuyer = async (req, res) => {
       token,
       role: "buyer",
     });
+
   } catch (error) {
     return res.status(400).send({
       message: "Something went wrong while registering new buyer.",
@@ -364,7 +387,7 @@ exports.getProcurements = async (req, res) => {
           finalizedAt: 1,
           farmer_name: "$farmer.farmer_name",
           farmer_image_path: "$farmer.farmer_image_path",
-          crop_id:"$crop.crop_id",
+          crop_id: "$crop.crop_id",
           crop_name: "$crop.crop_name",
           crop_units: "$crop.crop_units",
           cost_per_unit: 1,

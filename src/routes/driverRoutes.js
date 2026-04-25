@@ -3,7 +3,7 @@ const express = require("express");
 const driverController = require("../controllers/driverController");
 const authenticate = require("../middlewares/authMiddleware");
 const authorizeRole = require("../middlewares/authorizeRole");
-const upload = require("../middlewares/uploadDriver");
+const upload = require("../middlewares/upload");
 
 const router = express.Router();
 

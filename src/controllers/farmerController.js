@@ -1,5 +1,6 @@
 const cloudinary = require("../config/cloudinary");
 const path = require("path");
+const streamifier = require("streamifier");
 
 const Farmer = require("../models/farmer");
 const { ProcurementRequest } = require("../models/procurement_request");
@@ -8,7 +9,7 @@ const { PaymentDue } = require("../models/payment_dues");
 const { Transaction } = require("../models/transaction");
 const { TractorWork } = require("../models/tractor_work");
 const { TractorWorkPaymentDue } = require("../models/tractor_work_payment_due");
-const {TractorTransaction} =require("../models/tractor_transaction");
+const { TractorTransaction } = require("../models/tractor_transaction");
 
 const { generateId } = require("../utils/generateId");
 const { getHashedPassword } = require("../utils/getHashedPassword");
@@ -20,28 +21,36 @@ exports.registerFarmer = async (req, res) => {
   try {
     const { farmer_password, farmer_mobile } = req.body;
     const existedFarmer = await Farmer.findFarmerByMobile(farmer_mobile);
-
     if (existedFarmer) {
-      return res.status(400).send({
-        success: false,
-        message: "Farmer Already existed with this mobile number",
-        error: "Mobile number already existed",
+      return res
+        .status(400)
+        .send({
+          success: false,
+          message: "Farmer Already existed with this mobile number",
+          error: "Mobile number already existed",
+        });
+    }
+    const file = req.file;
+    const farmer_id = generateId("F");
+    let fileName = null;
+    if (file) {
+      const extension = path.extname(file.originalname).toLowerCase();
+      fileName = `${farmer_id}${extension}`;
+      await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            public_id: `farmers/${farmer_id}`,
+            resource_type: "image",
+            overwrite: true,
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          },
+        );
+        streamifier.createReadStream(file.buffer).pipe(stream);
       });
     }
-    const tempFile = req.file;
-    const farmer_id = generateId("F");
-    const extension = path.extname(tempFile.originalname).toLowerCase();
-    const fileName = `${farmer_id}${extension}`;
-
-    const cloudinaryRes = await cloudinary.uploader.upload(tempFile.path, {
-      public_id: `${farmer_id}`,
-      folder: "farmers",
-      overwrite: true,
-      resource_type: "image",
-    });
-    const fs = require("fs");
-    fs.unlinkSync(tempFile.path);
-
     const hashedPassword = await getHashedPassword(farmer_password);
     const farmerInfo = {
       ...req.body,
@@ -61,19 +70,22 @@ exports.registerFarmer = async (req, res) => {
       user_id: safeFarmer.farmer_id,
       role: "farmer",
     });
-
-    res.status(200).send({
-      success: true,
-      data: safeFarmer,
-      token,
-      role: "farmer",
-      message: "Farmer Registered Successfully.",
-    });
+    res
+      .status(200)
+      .send({
+        success: true,
+        data: safeFarmer,
+        token,
+        role: "farmer",
+        message: "Farmer Registered Successfully.",
+      });
   } catch (error) {
-    res.status(400).send({
-      message: "Something went wrong while registering the farmer.",
-      error: error.message,
-    });
+    res
+      .status(400)
+      .send({
+        message: "Something went wrong while registering the farmer.",
+        error: error.message,
+      });
   }
 };
 

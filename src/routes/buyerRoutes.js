@@ -3,7 +3,7 @@ const buyerController = require("../controllers/buyerController");
 
 const authenticate = require("../middlewares/authMiddleware");
 const authorizeRole = require("../middlewares/authorizeRole");
-const upload=require("../middlewares/uploadBuyer");
+const upload=require("../middlewares/upload");
 
 const router = express.Router();
 

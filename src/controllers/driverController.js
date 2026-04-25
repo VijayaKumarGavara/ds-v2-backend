@@ -1,5 +1,7 @@
 const cloudinary = require("../config/cloudinary");
 const path = require("path");
+const streamifier = require("streamifier");
+
 
 const Driver = require("../models/driver");
 const Farmer = require("../models/farmer");
@@ -16,8 +18,8 @@ const getAgriYear = require("../utils/getAgriYear");
 exports.registerDriver = async (req, res) => {
   try {
     const { driver_password, driver_mobile } = req.body;
-    const existedDriver = await Driver.findDriverByMobile(driver_mobile);
 
+    const existedDriver = await Driver.findDriverByMobile(driver_mobile);
     if (existedDriver) {
       return res.status(400).send({
         success: false,
@@ -26,28 +28,43 @@ exports.registerDriver = async (req, res) => {
       });
     }
 
-    const tempFile = req.file;
+    const file = req.file;
     const driver_id = generateId("Driver");
-    const extension = path.extname(tempFile.originalname).toLowerCase();
-    const fileName = `${driver_id}${extension}`;
 
-    const cloudinaryRes = await cloudinary.uploader.upload(tempFile.path, {
-      public_id: `${driver_id}`,
-      folder: "drivers",
-      overwrite: true,
-      resource_type: "image",
-    });
-    const fs = require("fs");
-    fs.unlinkSync(tempFile.path);
+    let fileName = null;
+
+    if (file) {
+      const extension = path.extname(file.originalname).toLowerCase();
+      fileName = `${driver_id}${extension}`;
+
+      await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            public_id: `drivers/${driver_id}`,
+            resource_type: "image",
+            overwrite: true,
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        streamifier.createReadStream(file.buffer).pipe(stream);
+      });
+    }
 
     const hashedPassword = await getHashedPassword(driver_password);
+
     const driverInfo = {
       ...req.body,
       driver_id,
       driver_password: hashedPassword,
       driver_image_path: fileName,
     };
+
     const result = await Driver.registerDriver(driverInfo);
+
     const safeDriver = {
       driver_id: result.driver_id,
       driver_name: result.driver_name,
@@ -55,6 +72,7 @@ exports.registerDriver = async (req, res) => {
       driver_mobile: result.driver_mobile,
       driver_image_path: result.driver_image_path,
     };
+
     const token = generateToken({
       user_id: safeDriver.driver_id,
       role: "driver",
