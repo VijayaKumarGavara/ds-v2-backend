@@ -52,11 +52,15 @@ const farmerSchema = new mongoose.Schema(
 
     registered_by: {
       type: String,
-      enum: ["self", "buyer"],
+      enum: ["self", "buyer", "driver"],
       default: "self",
     },
 
     registered_by_buyer_id: {
+      type: String,
+      default: null,
+    },
+    registered_by_driver_id: {
       type: String,
       default: null,
     },

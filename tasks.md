@@ -1,0 +1,7 @@
+-- Update the due when the new work added
+-- create the routes for fetching tractor works for both drivers and farmers
+-- create the routes for fetching the tractor-work dues for both drivers and farmers.
+-- Add the payment record system for tractor-track feature.
+-- Add the tractions for the payments between farmers &  driver for clearing tractor work dues.
+-- Add the the edit & delete option for each work for tractor-driver and make the system to work accordingly.
+-- Add the authentication and authorization middlewares for tractor-track system.

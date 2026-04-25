@@ -1,5 +1,6 @@
 const Buyer = require("../models/buyer");
 const Farmer = require("../models/farmer");
+const Driver=require("../models/driver")
 
 exports.getMe = async (req, res) => {
   try {
@@ -10,6 +11,8 @@ exports.getMe = async (req, res) => {
       user = await Buyer.findBuyerById(user_id);
     } else if (role === "farmer") {
       user = await Farmer.findFarmerById(user_id);
+    }else if(role==="driver"){
+      user=await Driver.findDriverById(user_id);
     } else {
       return res.status(400).send({
         success: false,
@@ -42,6 +45,16 @@ exports.getMe = async (req, res) => {
         farmer_village: user.farmer_village,
       };
     }
+
+    if (role === "driver") {
+      safeUser = {
+        driver_id: user.driver_id,
+        driver_name: user.driver_name,
+        driver_mobile: user.driver_mobile,
+        driver_village: user.driver_village,
+      };
+    }
+
     res.status(200).send({
       success: true,
       data: {
