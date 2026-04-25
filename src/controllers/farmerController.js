@@ -442,7 +442,7 @@ exports.getTractorWorks = async (req, res) => {
           driver_image_path: "$driver.driver_image_path",
           work: 1,
           notes: 1,
-          quantity: 1,
+          quantity: { $round: ["$quantity", 2] },
           cost_per_unit: 1,
           total_amount: 1,
           createdAt: 1,
@@ -513,10 +513,11 @@ exports.getTractorWorkPaymentDues = async (req, res) => {
 
 exports.getTractorTransactions = async (req, res) => {
   const farmer_id = req.user.user_id;
+
   try {
     const farmerTransactions = await TractorTransaction.aggregate([
       {
-        $match: { farmer_id: farmer_id },
+        $match: { farmer_id },
       },
       {
         $lookup: {
@@ -527,20 +528,32 @@ exports.getTractorTransactions = async (req, res) => {
         },
       },
       { $unwind: "$driver" },
+
       {
         $project: {
           _id: 0,
+          transaction_id: 1,
+
           driver_name: "$driver.driver_name",
+
           amount: 1,
+          discount: { $ifNull: ["$discount", 0] },
+
+          payment_mode: 1,
+          remarks: 1,
+
           balance_before: 1,
           balance_after: 1,
+
           createdAt: 1,
         },
       },
+
       {
         $sort: { createdAt: -1 },
       },
     ]);
+
     res.status(200).send({
       success: true,
       data: farmerTransactions,

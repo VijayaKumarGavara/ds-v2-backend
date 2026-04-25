@@ -278,7 +278,7 @@ exports.getTractorWorks = async (req, res) => {
         $project: {
           _id: 0,
           work_id: 1,
-          quantity: 1,
+          quantity: { $round: ["$quantity", 2] },
           cost_per_unit: 1,
           total_amount: 1,
           createdAt: 1,
@@ -359,11 +359,12 @@ exports.getPaymentDues = async (req, res) => {
 
 exports.getTransactions = async (req, res) => {
   const driver_id = req.user.user_id;
+
   try {
     const driverTransactions = await TractorTransaction.aggregate([
       {
         $match: {
-          driver_id: driver_id,
+          driver_id,
         },
       },
       {
@@ -375,16 +376,26 @@ exports.getTransactions = async (req, res) => {
         },
       },
       { $unwind: "$farmer" },
+
       {
         $project: {
-          _id: 1,
+          _id: 0,
+          transaction_id: 1,
           farmer_name: "$farmer.farmer_name",
+
           amount: 1,
+          discount: { $ifNull: ["$discount", 0] },
+
+          payment_mode: 1,
+          remarks: 1,
+
           balance_before: 1,
           balance_after: 1,
+
           createdAt: 1,
         },
       },
+
       {
         $sort: { createdAt: -1 },
       },
@@ -399,7 +410,7 @@ exports.getTransactions = async (req, res) => {
     return res.status(400).send({
       success: false,
       error: error.message,
-      message: "Failed to fetch the Driver transactions.",
+      message: "Failed to fetch transactions.",
     });
   }
 };

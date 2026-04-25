@@ -13,12 +13,7 @@ exports.createTractorWork = async (req, res) => {
 
     let { quantity, cost_per_unit, farmer_id, driver_id } = req.body;
 
-    quantity=Number(quantity.toFixed(2));
-    req.body.quantity=quantity;
-
-    const total_amount = Number(
-      (quantity * Number(cost_per_unit)).toFixed(2)
-    );
+    const total_amount = Math.round(quantity * Number(cost_per_unit));
 
     const workInfo = {
       ...req.body,
@@ -29,7 +24,7 @@ exports.createTractorWork = async (req, res) => {
 
     const tractorWorkResult = await TractorWork.createTractorWork(
       workInfo,
-      session
+      session,
     );
 
     let due_id;
@@ -37,7 +32,7 @@ exports.createTractorWork = async (req, res) => {
     const existingDue = await TractorWorkPaymentDue.existingDue(
       farmer_id,
       driver_id,
-      session
+      session,
     );
 
     if (existingDue) {
@@ -50,7 +45,7 @@ exports.createTractorWork = async (req, res) => {
       { farmer_id, driver_id },
       total_amount,
       due_id,
-      session
+      session,
     );
 
     await session.commitTransaction();
@@ -61,7 +56,6 @@ exports.createTractorWork = async (req, res) => {
       data: [tractorWorkResult, due],
       message: "Work added successfully",
     });
-
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -81,7 +75,7 @@ exports.updateTractorWork = async (req, res) => {
     await session.startTransaction();
 
     const { work_id } = req.query;
-    console.log(req.body, work_id)
+    console.log(req.body, work_id);
     const { quantity, cost_per_unit, work, notes } = req.body;
 
     const existingWork = await TractorWork.existingWork(work_id, session);
@@ -93,7 +87,7 @@ exports.updateTractorWork = async (req, res) => {
     const old_total = existingWork.total_amount;
 
     const new_total = Number(
-      (Number(quantity) * Number(cost_per_unit)).toFixed(2)
+      (Number(quantity) * Number(cost_per_unit)).toFixed(2),
     );
 
     const diff = Number((new_total - old_total).toFixed(2));
@@ -108,7 +102,7 @@ exports.updateTractorWork = async (req, res) => {
         notes,
         is_modified: true,
       },
-      { session }
+      { session },
     );
 
     await TractorWorkPaymentDue.adjustDueByDiff(
@@ -117,7 +111,7 @@ exports.updateTractorWork = async (req, res) => {
         driver_id: existingWork.driver_id,
       },
       diff,
-      session
+      session,
     );
 
     await session.commitTransaction();
@@ -128,7 +122,6 @@ exports.updateTractorWork = async (req, res) => {
       data: updatedWork,
       message: "Work updated successfully",
     });
-
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -149,10 +142,7 @@ exports.deleteTractorWork = async (req, res) => {
 
     const { work_id } = req.query;
 
-    const existingWork = await TractorWork.existingWork(
-      work_id,
-      session
-    );
+    const existingWork = await TractorWork.existingWork(work_id, session);
 
     if (!existingWork) {
       throw new Error("Work not found");
@@ -163,7 +153,7 @@ exports.deleteTractorWork = async (req, res) => {
     const due = await TractorWorkPaymentDue.existingDue(
       farmer_id,
       driver_id,
-      session
+      session,
     );
 
     if (!due) {
@@ -175,14 +165,10 @@ exports.deleteTractorWork = async (req, res) => {
     await TractorWorkPaymentDue.adjustDueByDiff(
       { farmer_id, driver_id },
       -total_amount,
-      session
+      session,
     );
 
-    await TractorWork.deleteOrCancelWork(
-      work_id,
-      hasPayment,
-      session
-    );
+    await TractorWork.deleteOrCancelWork(work_id, hasPayment, session);
 
     await session.commitTransaction();
     session.endSession();
@@ -193,7 +179,6 @@ exports.deleteTractorWork = async (req, res) => {
         ? "Work cancelled successfully"
         : "Work deleted successfully",
     });
-
   } catch (error) {
     await session.abortTransaction();
     session.endSession();

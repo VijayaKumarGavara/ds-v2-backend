@@ -27,6 +27,11 @@ const tractorTransactionSchema = new Schema(
       min: 1, // no zero / negative payments
     },
 
+    discount: {
+      type: Number,
+      min: 0, // no negative payments
+    },
+
     payment_mode: {
       type: String,
       enum: ["cash", "upi", "bank", "cheque", "other"],
