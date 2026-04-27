@@ -64,7 +64,7 @@ exports.findBuyerById = async (buyer_id) => {
   return Buyer.findOne({ buyer_id });
 };
 
-exports.updateBuyer = async (buyer_id, data) => {
+exports.updateProfile = async (buyer_id, data) => {
   return Buyer.findOneAndUpdate({ buyer_id }, data, {
     returnDocument: "after",
   });

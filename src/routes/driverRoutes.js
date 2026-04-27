@@ -17,6 +17,7 @@ router.patch(
   "/update",
   authenticate,
   authorizeRole("driver"),
+  upload.single("driver_photo"),
   driverController.updateProfile,
 );
 router.get(

@@ -165,19 +165,56 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-exports.updateBuyer = async (req, res) => {
-  const data = req.body;
-  const { buyer_id } = req.body;
+exports.updateProfile = async (req, res) => {
   try {
-    const result = await Buyer.updateBuyer(buyer_id, data);
-    return res.status(201).send({
-      data: result,
+    const buyer_id = req.user.user_id;
+
+    const { buyer_name, buyer_village } = req.body;
+    const file = req.file;
+
+    let updatedFields = {};
+
+    if (buyer_name) updatedFields.buyer_name = buyer_name;
+    if (buyer_village) updatedFields.buyer_village = buyer_village;
+
+    if (file) {
+      const extension = path.extname(file.originalname).toLowerCase();
+      const fileName = `${buyer_id}${extension}`;
+
+      await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            public_id: `buyers/${buyer_id}`,
+            resource_type: "image",
+            overwrite: true,
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        streamifier.createReadStream(file.buffer).pipe(stream);
+      });
+
+      updatedFields.buyer_image_path = fileName;
+    }
+    const updatedBuyer = await Buyer.updateProfile(
+      buyer_id,
+      updatedFields
+    );
+
+    res.status(200).send({
       success: true,
-      message: "Buyer Data Updated Successfully.",
+      data: updatedBuyer,
+      message: "Profile updated successfully",
     });
+
   } catch (error) {
-    return res.status(400).send({
-      message: "Something went wrong while updating the buyer.",
+    console.log(error.message)
+    res.status(400).send({
+      success: false,
+      message: "Failed to update profile",
       error: error.message,
     });
   }

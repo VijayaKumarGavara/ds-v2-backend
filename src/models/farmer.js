@@ -105,9 +105,7 @@ exports.updateProfile = async (farmer_id, data) => {
     const result = await Farmer.findOneAndUpdate(
       { farmer_id: farmer_id },
       data,
-      {
-        returnDocument: "after",
-      },
+      { returnDocument: "after" },
     );
     return result;
   } catch (error) {
@@ -152,7 +150,13 @@ exports.findFarmers = async (filters) => {
 
     return await Farmer.find(
       { $or: orConditions },
-      { farmer_id: 1, farmer_name: 1, farmer_mobile: 1, farmer_village: 1, farmer_image_path:1 },
+      {
+        farmer_id: 1,
+        farmer_name: 1,
+        farmer_mobile: 1,
+        farmer_village: 1,
+        farmer_image_path: 1,
+      },
     ).limit(20);
   } catch (error) {
     throw error;

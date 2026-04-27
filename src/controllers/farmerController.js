@@ -155,16 +155,54 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.updateProfile = async (req, res) => {
-  const data = req.body;
-  const farmer_id = req.user.user_id;
   try {
-    const result = await Farmer.updateProfile(farmer_id, data);
-    res
-      .status(201)
-      .send({ data: result, message: "Farmer Data Updated Successfully." });
+    const farmer_id = req.user.user_id;
+
+    const { farmer_name, farmer_village } = req.body;
+    const file = req.file;
+
+    let updatedFields = {};
+
+    if (farmer_name) updatedFields.farmer_name = farmer_name;
+    if (farmer_village) updatedFields.farmer_village = farmer_village;
+
+    if (file) {
+      const extension = path.extname(file.originalname).toLowerCase();
+      const fileName = `${farmer_id}${extension}`;
+
+      await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            public_id: `farmers/${farmer_id}`,
+            resource_type: "image",
+            overwrite: true,
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        streamifier.createReadStream(file.buffer).pipe(stream);
+      });
+
+      updatedFields.farmer_image_path = fileName;
+    }
+    const updatedFarmer = await Farmer.updateProfile(
+      farmer_id,
+      updatedFields
+    );
+
+    res.status(200).send({
+      success: true,
+      data: updatedFarmer,
+      message: "Profile updated successfully",
+    });
+
   } catch (error) {
     res.status(400).send({
-      message: "Something went wrong while updating the farmer.",
+      success: false,
+      message: "Failed to update profile",
       error: error.message,
     });
   }

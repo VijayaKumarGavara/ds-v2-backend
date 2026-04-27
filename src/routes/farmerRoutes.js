@@ -22,7 +22,8 @@ router.patch(
   "/update",
   authenticate,
   authorizeRole("farmer"),
-  farmerController.updateProfile,
+  upload.single("farmer_photo"),
+  farmerController.updateProfile
 );
 router.get(
   "/sales",

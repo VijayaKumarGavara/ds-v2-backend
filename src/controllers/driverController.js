@@ -144,16 +144,54 @@ exports.loginDriver = async (req, res) => {
 };
 
 exports.updateProfile = async (req, res) => {
-  const data = req.body;
-  const driver_id = req.user.user_id;
   try {
-    const result = await Driver.updateProfile(driver_id, data);
-    res
-      .status(200)
-      .send({ data: result, message: "Driver Data Updated Successfully." });
+    const driver_id = req.user.user_id;
+
+    const { driver_name, driver_village } = req.body;
+    const file = req.file;
+
+    let updatedFields = {};
+
+    if (driver_name) updatedFields.driver_name = driver_name;
+    if (driver_village) updatedFields.driver_village = driver_village;
+
+    if (file) {
+      const extension = path.extname(file.originalname).toLowerCase();
+      const fileName = `${driver_id}${extension}`;
+
+      await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            public_id: `drivers/${driver_id}`,
+            resource_type: "image",
+            overwrite: true,
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        streamifier.createReadStream(file.buffer).pipe(stream);
+      });
+
+      updatedFields.driver_image_path = fileName;
+    }
+    const updatedDriver = await Driver.updateProfile(
+      driver_id,
+      updatedFields
+    );
+
+    res.status(200).send({
+      success: true,
+      data: updatedDriver,
+      message: "Profile updated successfully",
+    });
+
   } catch (error) {
     res.status(400).send({
-      message: "Something went wrong while updating the farmer.",
+      success: false,
+      message: "Failed to update profile",
       error: error.message,
     });
   }
