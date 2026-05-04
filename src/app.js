@@ -9,6 +9,7 @@ const procurementRequestRoutes = require("./routes/procurementReuqestRoutes");
 const procurementRoutes = require("./routes/procurementRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const authRoutes = require("./routes/authRoutes");
+const weatherRoutes = require("./routes/weatherRoutes");
 
 const driverRoutes=require("./routes/driverRoutes");
 const tractorWorkRoutes=require("./routes/tractorWorkRoutes");
@@ -25,6 +26,7 @@ app.use("/api/crop", cropRoutes);
 app.use("/api/procurement-request", procurementRequestRoutes);
 app.use("/api/procurement", procurementRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/weather", weatherRoutes);
 
 app.use("/api/driver", driverRoutes);
 app.use("/api/tractor-work", tractorWorkRoutes);
